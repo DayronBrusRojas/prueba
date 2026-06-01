@@ -16,24 +16,35 @@ import com.amazonas.backend.modules.products.model.Product;
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     @Query(value = "SELECT DISTINCT p FROM Product p " +
-           "LEFT JOIN p.materiales pm " +
-           "LEFT JOIN pm.material m " +
-           "WHERE (:categoriaId IS NULL OR p.categoria.id = :categoriaId) AND " +
+           "LEFT JOIN FETCH p.materiales pm " +
+           "LEFT JOIN FETCH pm.material m " +
+           "LEFT JOIN FETCH p.categoria c " +
+           "WHERE (:categoriaId IS NULL OR c.id = :categoriaId) AND " +
            "(CAST(:search AS string) IS NULL OR LOWER(p.titulo) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(c.nombre) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(m.nombre) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))",
            countQuery = "SELECT COUNT(DISTINCT p) FROM Product p " +
            "LEFT JOIN p.materiales pm " +
            "LEFT JOIN pm.material m " +
-           "WHERE (:categoriaId IS NULL OR p.categoria.id = :categoriaId) AND " +
+           "LEFT JOIN p.categoria c " +
+           "WHERE (:categoriaId IS NULL OR c.id = :categoriaId) AND " +
            "(CAST(:search AS string) IS NULL OR LOWER(p.titulo) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "OR LOWER(c.nombre) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(m.nombre) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))")
     Page<Product> searchProducts(
             @Param("categoriaId") String categoriaId,
             @Param("search") String search,
             Pageable pageable
     );
+
+    @Query("SELECT p FROM Product p " +
+           "LEFT JOIN FETCH p.materiales pm " +
+           "LEFT JOIN FETCH pm.material m " +
+           "LEFT JOIN FETCH p.categoria " +
+           "WHERE p.id = :id")
+    java.util.Optional<Product> findByIdWithDetails(@Param("id") UUID id);
 
     @Query("SELECT p FROM Product p WHERE p.categoria.id = :categoriaId AND p.id <> :productId")
     List<Product> findRelatedProducts(

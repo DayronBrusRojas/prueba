@@ -177,12 +177,40 @@
   font-size:13px;
   font-weight:700;
 }
+.category-item,
 .product-item {
   width: 100%;
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
+}
+
+/* LOADING */
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px 20px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #edf2f7;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  color: #64748b;
+  font-size: 15px;
+}
+
+.spinning {
+  color: #00a982;
+  font-size: 22px;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 /* EMPTY */

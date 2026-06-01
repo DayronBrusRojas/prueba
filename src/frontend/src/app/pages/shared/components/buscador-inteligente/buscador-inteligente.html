@@ -27,10 +27,16 @@
 
   </div>
 
+  <!-- CARGANDO -->
+  <div class="loading-indicator" *ngIf="cargando">
+    <span class="material-icons spinning">autorenew</span>
+    Buscando...
+  </div>
+
   <!-- RESULTADOS -->
   <div
     class="results-container"
-    *ngIf="resultados.length > 0">
+    *ngIf="resultados.length > 0 && !cargando">
 
     <!-- HEADER -->
     <div class="results-header">
@@ -46,12 +52,16 @@
     </div>
 
     <!-- CATEGORIAS -->
-    <div class="section-title">
+    <div class="section-title" *ngIf="categoriasFiltradas.length > 0">
       CATEGORÍAS
     </div>
 
-    <!-- CATEGORY ITEM -->
-    <div class="search-item category-item">
+    <!-- CATEGORIAS DINAMICAS DEL BACKEND -->
+    <button
+      class="search-item category-item"
+      *ngFor="let cat of categoriasFiltradas"
+      type="button"
+      (click)="buscarPorCategoria(cat)">
 
       <div class="item-left">
 
@@ -64,11 +74,11 @@
         <div class="item-content">
 
           <h4>
-            Ciencia
+            {{ cat }}
           </h4>
 
           <p>
-            Modelos científicos educativos
+            Ver todas las maquetas de esta categoría
           </p>
 
         </div>
@@ -79,67 +89,7 @@
         arrow_forward
       </span>
 
-    </div>
-
-    <div class="search-item category-item">
-
-      <div class="item-left">
-
-        <div class="item-icon">
-          <span class="material-icons">
-            architecture
-          </span>
-        </div>
-
-        <div class="item-content">
-
-          <h4>
-            Arquitectura
-          </h4>
-
-          <p>
-            Maquetas arquitectónicas escolares
-          </p>
-
-        </div>
-
-      </div>
-
-      <span class="material-icons item-arrow">
-        arrow_forward
-      </span>
-
-    </div>
-
-    <div class="search-item category-item">
-
-      <div class="item-left">
-
-        <div class="item-icon">
-          <span class="material-icons">
-            school
-          </span>
-        </div>
-
-        <div class="item-content">
-
-          <h4>
-            Educativo
-          </h4>
-
-          <p>
-            Modelos didácticos generales
-          </p>
-
-        </div>
-
-      </div>
-
-      <span class="material-icons item-arrow">
-        arrow_forward
-      </span>
-
-    </div>
+    </button>
 
     <!-- PRODUCTOS -->
     <div class="section-title">
@@ -189,7 +139,7 @@
   <!-- EMPTY -->
   <div
     class="empty-results"
-    *ngIf="searchTerm && resultados.length === 0">
+    *ngIf="searchTerm && resultados.length === 0 && !cargando">
 
     <span class="material-icons">
       sentiment_dissatisfied
