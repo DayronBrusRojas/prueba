@@ -150,7 +150,11 @@ export class Auth implements OnChanges {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err?.error?.message || err?.error || 'Error al crear la cuenta. Intenta de nuevo.';
+        if (err?.status === 409) {
+          this.errorMessage = 'El correo ya se encuentra registrado';
+        } else {
+          this.errorMessage = err?.error?.message || err?.error || 'Error al crear la cuenta. Intenta de nuevo.';
+        }
       }
     });
   }
