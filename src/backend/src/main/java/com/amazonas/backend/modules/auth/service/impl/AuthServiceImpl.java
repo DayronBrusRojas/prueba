@@ -77,11 +77,46 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Contraseña incorrecta");
+        // Verificar bloqueo temporal
+        if (user.getLockUntil() != null && user.getLockUntil().isAfter(LocalDateTime.now())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.LOCKED,
+                    "Cuenta bloqueada temporalmente. Intenta nuevamente más tarde.");
         }
+
+        // Contraseña inválida
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            // Incrementar contador de intentos
+            int attempts = (user.getFailedLoginAttempts() == null) ? 0 : user.getFailedLoginAttempts();
+            attempts++;
+            user.setFailedLoginAttempts(attempts);
+
+            // Si alcanzó 3 intentos, bloquear por 15 minutos
+            if (attempts >= 3) {
+                user.setLockUntil(LocalDateTime.now().plusMinutes(15));
+            }
+
+            userRepository.save(user);
+
+            // Si recién se bloqueó, devolver LOCKED; si no, devolver UNAUTHORIZED
+            if (attempts >= 3) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.LOCKED,
+                        "Cuenta bloqueada temporalmente tras varios intentos fallidos.");
+            } else {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.UNAUTHORIZED,
+                        "Credenciales inválidas");
+            }
+        }
+
+        // Login exitoso: resetear contador y desbloquear
+        user.setFailedLoginAttempts(0);
+        user.setLockUntil(null);
+        userRepository.save(user);
 
         String token = jwtService.generateToken(user.getEmail());
         return new AuthResponse(token, user.getEmail(), user.getRole().name(), user.getNombre());

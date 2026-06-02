@@ -53,6 +53,13 @@ public class User implements UserDetails {
     )
     @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private Role role = Role.CLIENT;
+    
+    // Nuevo: intentos fallidos y bloqueo temporal
+    @Column(name = "failed_login_attempts", nullable = false)
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "lock_until")
+    private LocalDateTime lockUntil;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -135,6 +142,22 @@ public class User implements UserDetails {
         this.role = role;
     }
 
+    public Integer getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public void setFailedLoginAttempts(Integer failedLoginAttempts) {
+        this.failedLoginAttempts = failedLoginAttempts;
+    }
+
+    public LocalDateTime getLockUntil() {
+        return lockUntil;
+    }
+
+    public void setLockUntil(LocalDateTime lockUntil) {
+        this.lockUntil = lockUntil;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -182,7 +205,8 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        // Cuenta no bloqueada si lockUntil es null o ya pasó
+        return lockUntil == null || lockUntil.isBefore(LocalDateTime.now());
     }
 
     @Override
