@@ -111,7 +111,17 @@ export class Auth implements OnChanges {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err?.error?.message || err?.error || 'Correo o contraseña incorrectos.';
+        const message = typeof err?.error === 'string'
+          ? err.error
+          : (err?.error?.message || err?.message || err?.error);
+
+        if (err?.status === 423) {
+          this.errorMessage = message || 'Tu cuenta está temporalmente bloqueada. Intenta de nuevo más tarde.';
+        } else if (err?.status === 403) {
+          this.errorMessage = message || 'Acceso denegado. Revisa tus credenciales o contacta al soporte.';
+        } else {
+          this.errorMessage = message || 'Correo o contraseña incorrectos.';
+        }
       }
     });
   }

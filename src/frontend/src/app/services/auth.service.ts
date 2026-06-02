@@ -72,8 +72,16 @@ export class AuthService {
         },
         error: (err) => {
           console.log('Client login failed, checking fallback. Error:', err);
-          const errMsg = typeof err?.error === 'string' ? err.error : (err?.error?.message || '');
-          const isWrongPassword = errMsg.toLowerCase().includes('contraseña') || errMsg.toLowerCase().includes('password');
+          const errorMessage = typeof err?.error === 'string'
+            ? err.error
+            : (err?.error?.message || err?.message || '');
+
+          if (err?.status === 423 || err?.status === 403) {
+            subscriber.error(err);
+            return;
+          }
+
+          const isWrongPassword = errorMessage.toLowerCase().includes('contraseña') || errorMessage.toLowerCase().includes('password');
           
           if (!isWrongPassword) {
             console.log('Attempting vendor login fallback...');
