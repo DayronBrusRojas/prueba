@@ -42,8 +42,10 @@ public class SecurityConfig {
                         // Documentación Swagger - Pública
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         
-                        // ============ AUTENTICACIÓN: Ruta pública - SIN JWT REQUERIDO ============
+                        // ============ AUTENTICACIÓN: Rutas públicas - SIN JWT REQUERIDO ============
+                        // Acepta ambos prefijos: /api/auth/** y /auth/**
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
                         
                         // Productos - Lectura pública
                         .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
