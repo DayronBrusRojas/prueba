@@ -14,8 +14,9 @@ import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
 import { RequestFormComponent, RequestMode, SavedRequest, SessionUser } from './pages/request-form/request-form.component';
 import { AuthService } from './services/auth.service';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
+import { CategoriesComponent } from './pages/categories/categories.component';
 
-type PageView = 'inicio' | 'nosotros' | 'catalog' | 'detail' | 'auth' | 'request' | 'requests' | 'vendedor' | 'reset-password';
+type PageView = 'inicio' | 'nosotros' | 'catalog' | 'detail' | 'auth' | 'request' | 'requests' | 'vendedor' | 'reset-password' | 'categories';
 type AuthView = 'login' | 'register';
 
 @Component({
@@ -33,13 +34,14 @@ type AuthView = 'login' | 'register';
     Nosotros,
     MyRequestsComponent,
     RequestFormComponent,
-    ResetPasswordComponent
+    ResetPasswordComponent,
+    CategoriesComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class AppComponent implements OnInit, OnDestroy {
-  
+
   private readonly authService = inject(AuthService);
   private userSub?: Subscription;
 
@@ -54,6 +56,7 @@ export class AppComponent implements OnInit, OnDestroy {
   requestMode: RequestMode = 'personalizar';
   isStandaloneRequest = false;
   tokenToReset = '';
+  preselectedCategory = '';
 
   ngOnInit(): void {
     // Check for password reset token in URL query params
@@ -84,82 +87,94 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   showCatalog(): void {
+    this.preselectedCategory = '';
+    this.page = 'catalog';
+    this.accessNotice = '';
+  }
+
+  handleCategoryFromHeader(catId: string): void {
+    this.preselectedCategory = catId;
     this.page = 'catalog';
     this.accessNotice = '';
   }
 
   showInicio(): void {
-  this.page = 'inicio';
-  this.accessNotice = '';
-}
-
-showNosotros(): void {
-  this.page = 'nosotros';
-  this.accessNotice = '';
-}
-
-showDetails(model: ModelItem): void {
-
-  this.isStandaloneRequest = false;
-
-  this.selectedModel = model;
-  this.page = 'detail';
-
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-
-}
-
-
-
-requestAccess(action: RequestMode): void {
-
-  this.isStandaloneRequest = false;
-
-  if (this.currentUser) {
-    this.openRequest(action);
-    return;
+    this.page = 'inicio';
+    this.accessNotice = '';
   }
 
-  this.previousPage = this.page === 'auth'
-    ? this.previousPage
-    : this.page;
+  showNosotros(): void {
+    this.page = 'nosotros';
+    this.accessNotice = '';
+  }
 
-  this.accessNotice = action === 'comprar'
-    ? 'Para comprar una maqueta debes iniciar sesion o registrarte.'
-    : 'Para personalizar tu maqueta debes iniciar sesion o registrarte.';
+  showCategories(): void {
+    this.page = 'categories';
+    this.accessNotice = '';
+  }
 
-  this.authView = 'login';
-  this.page = 'auth';
-}
-openStandaloneRequest(): void {
+  showDetails(model: ModelItem): void {
 
-  this.isStandaloneRequest = true;
+    this.isStandaloneRequest = false;
 
-  if (!this.currentUser) {
+    this.selectedModel = model;
+    this.page = 'detail';
 
-    this.previousPage = this.page;
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
 
-    this.accessNotice =
-      'Para personalizar tu maqueta debes iniciar sesion o registrarte.';
+  }
+
+
+
+  requestAccess(action: RequestMode): void {
+
+    this.isStandaloneRequest = false;
+
+    if (this.currentUser) {
+      this.openRequest(action);
+      return;
+    }
+
+    this.previousPage = this.page === 'auth'
+      ? this.previousPage
+      : this.page;
+
+    this.accessNotice = action === 'comprar'
+      ? 'Para comprar una maqueta debes iniciar sesion o registrarte.'
+      : 'Para personalizar tu maqueta debes iniciar sesion o registrarte.';
 
     this.authView = 'login';
     this.page = 'auth';
-
-    return;
   }
+  openStandaloneRequest(): void {
 
-  this.requestMode = 'personalizar';
+    this.isStandaloneRequest = true;
 
-  this.page = 'request';
+    if (!this.currentUser) {
 
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-}
+      this.previousPage = this.page;
+
+      this.accessNotice =
+        'Para personalizar tu maqueta debes iniciar sesion o registrarte.';
+
+      this.authView = 'login';
+      this.page = 'auth';
+
+      return;
+    }
+
+    this.requestMode = 'personalizar';
+
+    this.page = 'request';
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
 
   showLogin(): void {
     this.previousPage = 'catalog';
@@ -226,7 +241,7 @@ openStandaloneRequest(): void {
     this.currentUser = null;
     this.showInicio();
   }
-  
+
   showVendedor(): void {
     this.page = 'vendedor';
   }
