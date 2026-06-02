@@ -70,3 +70,10 @@ export interface ProductAnalysisItem {
   imageUrl: string;
   totalSolicitudes: number;
 }
+
+export interface SearchIntentResponse {
+  action: 'SEARCH' | 'CUSTOMIZE';
+  categoria: string | null;
+  confianza: number;
+  explicacion: string;
+}
