@@ -19,7 +19,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "LEFT JOIN FETCH p.materiales pm " +
            "LEFT JOIN FETCH pm.material m " +
            "LEFT JOIN FETCH p.categoria c " +
-           "WHERE (:categoriaId IS NULL OR c.id = :categoriaId) AND " +
+           "WHERE (:categoriaId IS NULL OR c.id = :categoriaId OR " +
+           "(:categoriaId = 'educativo' AND c.id = 'educativa') OR (:categoriaId = 'educativa' AND c.id = 'educativo') OR " +
+           "(:categoriaId = 'inclusivo' AND c.id = 'inclusiva') OR (:categoriaId = 'inclusiva' AND c.id = 'inclusivo')) AND " +
            "(CAST(:search AS string) IS NULL OR LOWER(p.titulo) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(c.nombre) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
@@ -28,7 +30,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            "LEFT JOIN p.materiales pm " +
            "LEFT JOIN pm.material m " +
            "LEFT JOIN p.categoria c " +
-           "WHERE (:categoriaId IS NULL OR c.id = :categoriaId) AND " +
+           "WHERE (:categoriaId IS NULL OR c.id = :categoriaId OR " +
+           "(:categoriaId = 'educativo' AND c.id = 'educativa') OR (:categoriaId = 'educativa' AND c.id = 'educativo') OR " +
+           "(:categoriaId = 'inclusivo' AND c.id = 'inclusiva') OR (:categoriaId = 'inclusiva' AND c.id = 'inclusivo')) AND " +
            "(CAST(:search AS string) IS NULL OR LOWER(p.titulo) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(p.descripcion) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
            "OR LOWER(c.nombre) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +

@@ -35,8 +35,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponse> getProducts(String category, String search, Pageable pageable) {
-        // Normalizamos parámetros vacíos
-        String categoryParam = (category == null || category.trim().isEmpty()) ? null : category;
+        // Normalizamos parámetros vacíos y convertimos la categoría a su formato slug/ID
+        String categoryParam = (category == null || category.trim().isEmpty()) ? null : slugify(category.trim());
         String searchParam = (search == null || search.trim().isEmpty()) ? null : search;
 
         Page<Product> productPage = productRepository.searchProducts(categoryParam, searchParam, pageable);
@@ -127,6 +127,17 @@ public class ProductServiceImpl implements ProductService {
             product.setOcasion(normalizedOcasion);
         } else {
             product.setOcasion(null);
+        }
+
+        // Caracteristicas normalizacion
+        if (request.getCaracteristicas() != null) {
+            List<String> normalizedCaracteristicas = request.getCaracteristicas().stream()
+                    .filter(c -> c != null && !c.trim().isEmpty())
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            product.setCaracteristicas(normalizedCaracteristicas.isEmpty() ? null : normalizedCaracteristicas);
+        } else {
+            product.setCaracteristicas(null);
         }
 
         product.setMaterialesReciclables(
@@ -244,6 +255,7 @@ public class ProductServiceImpl implements ProductService {
         response.setGradoEscolar(product.getGradoEscolar());
         response.setMaterialesReciclables(product.getMaterialesReciclables());
         response.setOcasion(product.getOcasion());
+        response.setCaracteristicas(product.getCaracteristicas());
         if (product.getCategoria() != null) {
             response.setCategoriaId(product.getCategoria().getId());
             response.setCategoriaNombre(product.getCategoria().getNombre());

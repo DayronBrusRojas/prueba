@@ -7,17 +7,10 @@
       search
     </span>
 
-    <input
-      type="text"
-      placeholder="Busca maquetas, categorías o materiales..."
-      [(ngModel)]="searchTerm"
+    <input type="text" placeholder="Busca maquetas, categorías o materiales..." [(ngModel)]="searchTerm"
       (input)="buscar()">
 
-    <button
-      *ngIf="searchTerm"
-      class="clear-btn"
-      type="button"
-      (click)="limpiarBusqueda()">
+    <button *ngIf="searchTerm" class="clear-btn" type="button" (click)="limpiarBusqueda()">
 
       <span class="material-icons clear-icon">
         close
@@ -34,12 +27,55 @@
   </div>
 
   <!-- RESULTADOS -->
-  <div
-    class="results-container"
-    *ngIf="resultados.length > 0 && !cargando">
+  <div class="results-container"
+    *ngIf="(resultados.length > 0 || (intentResponse && (intentResponse.categoria || intentResponse.action === 'CUSTOMIZE'))) && !cargando">
+
+    <!-- SUGERENCIA DE INTENCIÓN DE IA (HÍBRIDO/SEMÁNTICO) -->
+    <div class="intent-card"
+      *ngIf="intentResponse && (intentResponse.categoria || intentResponse.action === 'CUSTOMIZE')">
+      <div class="intent-card-header">
+        <div class="intent-card-title">
+          <span class="material-icons sparkle-icon">auto_awesome</span>
+          <span>Búsqueda Inteligente</span>
+        </div>
+        <span class="confidence-badge" [ngClass]="getConfidenceClass(intentResponse.confianza)">
+          Coincidencia: {{ intentResponse.confianza }}%
+        </span>
+      </div>
+
+      <div class="intent-card-body">
+        <!-- DETECTED CATEGORY -->
+        <div *ngIf="intentResponse.categoria" class="intent-section">
+          <p class="intent-desc">
+            Entendemos que buscas maquetas de la categoría <strong>{{ intentResponse.categoria }}</strong>:
+          </p>
+          <blockquote class="intent-quote">
+            {{ intentResponse.explicacion }}
+          </blockquote>
+          <button type="button" class="intent-action-btn" (click)="buscarPorCategoria(intentResponse.categoria)">
+            <span class="material-icons">category</span>
+            Ver modelos de {{ intentResponse.categoria }}
+          </button>
+        </div>
+
+        <!-- CUSTOMIZE ACTION -->
+        <div *ngIf="intentResponse.action === 'CUSTOMIZE'" class="intent-section">
+          <p class="intent-desc">
+            ¿Quieres diseñar tu propia maqueta personalizada a medida?
+          </p>
+          <blockquote class="intent-quote">
+            {{ intentResponse.explicacion }}
+          </blockquote>
+          <button type="button" class="intent-action-btn customize-btn" (click)="requestAccess.emit('personalizar')">
+            <span class="material-icons">design_services</span>
+            Personalizar maqueta ahora
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- HEADER -->
-    <div class="results-header">
+    <div class="results-header" *ngIf="resultados.length > 0">
 
       Se encontraron
 
@@ -57,10 +93,7 @@
     </div>
 
     <!-- CATEGORIAS DINAMICAS DEL BACKEND -->
-    <button
-      class="search-item category-item"
-      *ngFor="let cat of categoriasFiltradas"
-      type="button"
+    <button class="search-item category-item" *ngFor="let cat of categoriasFiltradas" type="button"
       (click)="buscarPorCategoria(cat)">
 
       <div class="item-left">
@@ -97,18 +130,11 @@
     </div>
 
     <!-- PRODUCTOS DINAMICOS -->
-    <button
-      class="search-item product-item"
-      *ngFor="let item of resultados"
-      type="button"
-      (click)="abrirDetalle(item)">
+    <button class="search-item product-item" *ngFor="let item of resultados" type="button" (click)="abrirDetalle(item)">
 
       <div class="item-left">
 
-        <img
-          [src]="item.imageUrl"
-          [alt]="item.title"
-          class="product-image">
+        <img [src]="item.imageUrl" [alt]="item.title" class="product-image">
 
         <div class="item-content">
 
@@ -136,30 +162,30 @@
 
   </div>
 
-  <!-- EMPTY -->
-  <div
-    class="empty-results"
-    *ngIf="searchTerm && resultados.length === 0 && !cargando">
+  <!-- EMPTY STATE - CONVERTED TO A SEAMLESS CUSTOM MAQUETTE INVITATION -->
+  <div class="empty-results premium-empty"
+    *ngIf="searchTerm && resultados.length === 0 && !cargando && (!intentResponse || (!intentResponse.categoria && intentResponse.action !== 'CUSTOMIZE'))">
 
-    <span class="material-icons">
-      sentiment_dissatisfied
-    </span>
+    <div class="empty-sparkle-container">
+      <span class="material-icons empty-sparkle-1">auto_awesome</span>
+      <span class="material-icons empty-icon-main">design_services</span>
+      <span class="material-icons empty-sparkle-2">auto_awesome</span>
+    </div>
 
-    <h3>
-      No encontramos resultados
-    </h3>
+    <h3>¿No encuentras lo que buscas?</h3>
 
-    <p>
-      Intenta con otra búsqueda o solicita
-      una maqueta personalizada.
+    <p class="empty-text-premium">
+      No tenemos una maqueta prediseñada con el término <strong>"{{ searchTerm }}"</strong>,
+      pero no te preocupes: ¡podemos **diseñar y fabricar una maqueta totalmente a tu medida**!
     </p>
 
-    <button
-      type="button"
-      (click)="requestAccess.emit('personalizar')">
+    <div class="empty-badge-highlight">
+      <span class="material-icons">eco</span> Presupuesto gratis
+    </div>
 
-      Solicitar maqueta personalizada
-
+    <button class="empty-customize-btn" type="button" (click)="requestAccess.emit('personalizar')">
+      <span class="material-icons">architecture</span>
+      Diseñar Maqueta Personalizada
     </button>
 
   </div>

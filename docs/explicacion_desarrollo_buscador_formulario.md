@@ -142,3 +142,117 @@ private filtrarCategoriasLocal(termino: string): void {
 ```
 * **`display: flex; justify-content: center; align-items: center;`**: Distribuye el formulario como un bloque flexible y lo alinea perfectamente en el centro geométrico de la pantalla.
 * **`max-width: 600px;`**: Limita el ancho horizontal del formulario en monitores de escritorio grandes, manteniendo un diseño centrado, elegante y muy limpio.
+
+---
+
+## 📂 Archivo Nuevo: `SearchIntentServiceImpl.java` (Backend - Inteligencia Híbrida)
+Este servicio es el cerebro que analiza semánticamente lo que escribe el usuario, combinando reglas rápidas de sinónimos con la API de Gemini.
+
+### 1. El Flujo de Clasificación Híbrida
+```java
+@Override
+public SearchIntentResponse classifyIntent(String query) {
+    ...
+    // 1. Verificar Caché en memoria
+    if (cacheMap.containsKey(normalizedQuery)) {
+        return cacheMap.get(normalizedQuery);
+    }
+
+    // 2. Coincidencia local por sinónimos (Rápido y gratis)
+    SearchIntentResponse localMatch = checkLocalRules(normalizedQuery);
+    if (localMatch != null) {
+        return localMatch;
+    }
+
+    // 3. Fallback a Inteligencia Artificial (Gemini API)
+    return callGeminiAPI(query);
+}
+```
+* **Caché en Memoria (`cacheMap`)**: Guarda en un mapa las consultas resueltas. Si vuelves a buscar la misma frase, no se vuelve a llamar a la API ni a procesar las reglas; se retorna al instante desde la memoria RAM.
+* **Reglas Locales (`checkLocalRules`)**: Verifica palabras clave comunes. Por ejemplo, si la búsqueda contiene *"colegio"*, *"escuela"* o *"tarea"*, deduce directamente la categoría **Educativo** (95% de confianza) sin llamar a Gemini. Esto ahorra dinero en API y tiene respuesta inmediata (0ms).
+* **Consulta a Gemini (`callGeminiAPI`)**: Si el texto es complejo y no entra en las reglas locales (ej: *"necesito modelos interactivos táctiles para ciegos"*), le enviamos a Gemini un prompt estricto con un formato JSON estructurado. Gemini analiza y devuelve que la categoría correspondiente es **Inclusivo** con alta confianza.
+
+---
+
+## 📂 Archivo Modificado: `buscador-inteligente.ts` (Frontend - Integración Semántica)
+Actualizamos la tubería reactiva (RxJS pipe) para clasificar la intención antes de consultar los productos al backend.
+
+### 1. Integración en el Pipeline de RxJS
+```typescript
+return this.maquetaService.classifyIntent(limpio).pipe(
+  switchMap(intent => {
+    this.intentResponse = intent;
+    
+    let catToQuery: string | undefined = undefined;
+    let searchTermToQuery: string | undefined = limpio;
+
+    // Si la confianza es alta, consultamos productos por categoría
+    if (intent && intent.categoria && intent.confianza >= 50) {
+      catToQuery = intent.categoria;
+      searchTermToQuery = undefined;
+    }
+
+    return this.maquetaService.getProducts(catToQuery, searchTermToQuery, 0, 15);
+  }),
+  catchError(err => {
+    this.intentResponse = null;
+    return this.maquetaService.getProducts(undefined, limpio, 0, 15);
+  })
+);
+```
+* **`classifyIntent(limpio)`**: Lanza la petición al backend para entender la intención semántica de lo que escribió el usuario.
+* **`intentResponse`**: Almacena el resultado para poder usarlo en la interfaz de usuario.
+* **Búsqueda por Categoría**: Si la IA/reglas locales identifican una categoría con más del 50% de confianza, se realiza la consulta de productos por esa **categoría exacta** (`catToQuery`) en lugar del texto escrito por el usuario. Esto soluciona búsquedas naturales como *"quiero algo para mi clase de ciencia"* cargando directamente las maquetas de Ciencia, aunque las maquetas no contengan la frase exacta *"clase de ciencia"*.
+* **`catchError`**: Si hay algún error con la API de IA o internet, el buscador pasa de forma segura al fallback tradicional, buscando por coincidencia de palabras exactas sin congelar la pantalla.
+
+---
+
+## 📂 Archivo Modificado: `buscador-inteligente.html` (Frontend - Plantilla de IA)
+Implementamos una tarjeta (Card) de asistencia inteligente premium y dinámica que se posiciona al principio de los resultados de búsqueda.
+
+```html
+<div class="intent-card" *ngIf="intentResponse && (intentResponse.categoria || intentResponse.action === 'CUSTOMIZE')">
+  <div class="intent-card-header">
+    <div class="intent-card-title">
+      <span class="material-icons sparkle-icon">auto_awesome</span>
+      <span>Búsqueda Inteligente</span>
+    </div>
+    <span class="confidence-badge" [ngClass]="getConfidenceClass(intentResponse.confianza)">
+      Coincidencia: {{ intentResponse.confianza }}%
+    </span>
+  </div>
+  ...
+</div>
+```
+* **`*ngIf="..."`**: Muestra la tarjeta de IA solo si se detectó una categoría específica o una intención clara de personalización.
+* **Icono de Destello (`auto_awesome`)**: Agrega un toque visual elegante animado para señalar al usuario que el buscador ha utilizado Inteligencia Artificial.
+* **Insignia de Confianza (`confidence-badge`)**: Muestra el porcentaje de confianza con colores dinámicos (verde para alta confianza, amarillo para media, gris para baja).
+* **Acciones Integradas**:
+  - Si se sugiere una categoría, se muestra un botón para ver todas las maquetas de esa categoría.
+  - Si se detecta la intención de crear una maqueta personalizada (ej: *"quiero una maqueta personalizada"*), se muestra un botón destacado para abrir el formulario centrado al instante.
+
+---
+
+## 📂 Archivo Modificado: `buscador-inteligente.html` (Frontend - Estado Vacío Premium e Integración Orgánica)
+Transformamos el aburrido estado de "No se encontraron resultados" con cara triste en una invitación activa y premium para diseñar una maqueta personalizada.
+
+```html
+<div class="empty-results premium-empty" *ngIf="...">
+  <div class="empty-sparkle-container">
+    <span class="material-icons empty-sparkle-1">auto_awesome</span>
+    <span class="material-icons empty-icon-main">design_services</span>
+    ...
+  </div>
+  <h3>¿No encuentras lo que buscas?</h3>
+  <p class="empty-text-premium">
+    No tenemos una maqueta prediseñada con el término "{{ searchTerm }}", pero no te preocupes: ¡podemos diseñar y fabricar una maqueta totalmente a tu medida!
+  </p>
+  ...
+</div>
+```
+* **Iconos Animados Estilo IA**: Mostramos un icono central de diseño (`design_services`) rodeado de estrellas mágicas (`auto_awesome`) que flotan y brillan de forma asíncrona mediante animaciones CSS.
+* **Redacción Positiva y Orgánica**: En lugar de mostrar un error o un aviso negativo, le explicamos al usuario que, como no tenemos un producto estándar que coincida con su búsqueda de `{{ searchTerm }}`, estamos listos para fabricarlo a medida.
+* **Insignia Informativa y Botón de Llamada a la Acción (CTA)**:
+  - Se añade un badge verde que resalta el uso de materiales eco-amigables y presupuesto sin costo.
+  - El botón con degradado púrpura-índigo (`empty-customize-btn`) redirige al usuario de manera muy orgánica al formulario centrado de personalización al hacer clic, logrando una experiencia fluida y muy profesional.
+
