@@ -2,11 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 
 import { ModelItem } from '../../../data/model';
 import { MaquetaService } from '../../../../services/maqueta.service';
-import { Product } from '../../../../models/product.model';
+import { Product, SearchIntentResponse } from '../../../../models/product.model';
 
 @Component({
   selector: 'app-buscador-inteligente',
@@ -29,6 +29,9 @@ export class BuscadorInteligente implements OnInit, OnDestroy {
   resultados: ModelItem[] = [];
   cargando = false;
 
+  // Almacena la intención de búsqueda e IA clasificada
+  intentResponse: SearchIntentResponse | null = null;
+
   // Listas de categorías cargadas dinámicamente desde el endpoint de productos de la base de datos
   todasCategorias: string[] = [];
   categoriasFiltradas: string[] = [];
@@ -46,6 +49,7 @@ export class BuscadorInteligente implements OnInit, OnDestroy {
         this.resultados = [];
         this.categoriasFiltradas = [];
         this.cargando = false;
+        this.intentResponse = null;
         return of({
           content: [],
           totalElements: 0,
@@ -59,8 +63,29 @@ export class BuscadorInteligente implements OnInit, OnDestroy {
       }
       this.cargando = true;
 
-      // Buscar productos en el backend
-      return this.maquetaService.getProducts(undefined, limpio, 0, 15);
+      // Llamar al backend para clasificar la intención semántica (híbrido local + Gemini)
+      return this.maquetaService.classifyIntent(limpio).pipe(
+        switchMap(intent => {
+          this.intentResponse = intent;
+          
+          let catToQuery: string | undefined = undefined;
+          let searchTermToQuery: string | undefined = limpio;
+
+          // Si se detecta una categoría de forma clara, filtramos por esa categoría directamente
+          if (intent && intent.categoria && intent.confianza >= 50) {
+            catToQuery = intent.categoria;
+            searchTermToQuery = undefined;
+          }
+
+          return this.maquetaService.getProducts(catToQuery, searchTermToQuery, 0, 15);
+        }),
+        catchError(err => {
+          console.error('Error al clasificar intención de búsqueda:', err);
+          this.intentResponse = null;
+          // Fallback a búsqueda normal por palabra clave
+          return this.maquetaService.getProducts(undefined, limpio, 0, 15);
+        })
+      );
     })
   ).subscribe({
     next: (response) => {
@@ -70,6 +95,7 @@ export class BuscadorInteligente implements OnInit, OnDestroy {
     error: () => {
       this.resultados = [];
       this.cargando = false;
+      this.intentResponse = null;
     }
   });
 
@@ -123,6 +149,13 @@ export class BuscadorInteligente implements OnInit, OnDestroy {
     this.resultados = [];
     this.categoriasFiltradas = [];
     this.cargando = false;
+    this.intentResponse = null;
+  }
+
+  getConfidenceClass(confianza: number): string {
+    if (confianza >= 80) return 'confidence-high';
+    if (confianza >= 50) return 'confidence-medium';
+    return 'confidence-low';
   }
 
   setBusqueda(texto: string): void {

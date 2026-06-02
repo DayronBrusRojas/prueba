@@ -35,8 +35,8 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponse> getProducts(String category, String search, Pageable pageable) {
-        // Normalizamos parámetros vacíos
-        String categoryParam = (category == null || category.trim().isEmpty()) ? null : category;
+        // Normalizamos parámetros vacíos y convertimos la categoría a su formato slug/ID
+        String categoryParam = (category == null || category.trim().isEmpty()) ? null : slugify(category.trim());
         String searchParam = (search == null || search.trim().isEmpty()) ? null : search;
 
         Page<Product> productPage = productRepository.searchProducts(categoryParam, searchParam, pageable);
