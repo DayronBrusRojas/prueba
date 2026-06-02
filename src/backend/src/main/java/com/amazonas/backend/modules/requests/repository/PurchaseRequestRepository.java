@@ -44,4 +44,10 @@ public interface PurchaseRequestRepository extends JpaRepository<PurchaseRequest
     List<PurchaseRequest> findByEstadoOrderByCreatedAtDesc(EstadoSolicitud estado);
 
     List<PurchaseRequest> findAllByOrderByCreatedAtDesc();
+
+       @Query("SELECT COUNT(pr) FROM PurchaseRequest pr WHERE pr.usuario = :usuario AND pr.productoNombre = :productoNombre AND ((:mensaje IS NULL AND pr.mensaje IS NULL) OR pr.mensaje = :mensaje) AND pr.createdAt > :cutoff")
+       long countRecentDuplicates(@Param("usuario") User usuario,
+                                                    @Param("productoNombre") String productoNombre,
+                                                    @Param("mensaje") String mensaje,
+                                                    @Param("cutoff") java.time.LocalDateTime cutoff);
 }

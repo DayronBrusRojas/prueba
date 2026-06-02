@@ -48,6 +48,22 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
     public PurchaseRequestResponse crear(PurchaseRequestRequest req, String usuarioEmail) {
         User usuario = userRepository.findByEmail(usuarioEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + usuarioEmail));
+        // Determinar productoNombre temprano para chequear duplicados
+        String productoNombre = "Solicitud personalizada";
+        if (req.getProductoId() != null) {
+            Product producto = productRepository.findById(req.getProductoId())
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + req.getProductoId()));
+            productoNombre = producto.getTitulo();
+        }
+
+        // Validación de idempotencia: no permitir duplicados idénticos en 1 minuto
+        java.time.LocalDateTime cutoff = java.time.LocalDateTime.now().minusMinutes(1);
+        long recent = purchaseRequestRepository.countRecentDuplicates(usuario, productoNombre, req.getMensaje(), cutoff);
+        if (recent > 0) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.CONFLICT,
+                "Solicitud duplicada reciente");
+        }
 
         PurchaseRequest solicitud = new PurchaseRequest();
         solicitud.setUsuario(usuario);
@@ -64,12 +80,10 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         solicitud.setCantidadPersonas(req.getCantidadPersonas());
 
         // ─── Flujo 1: Maqueta Ya Hecha / Producto específico ───
-        String productoNombre = "Solicitud personalizada";
         if (req.getProductoId() != null) {
             Product producto = productRepository.findById(req.getProductoId())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + req.getProductoId()));
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + req.getProductoId()));
             solicitud.setProducto(producto);
-            productoNombre = producto.getTitulo();
         }
         solicitud.setProductoNombre(productoNombre);
 

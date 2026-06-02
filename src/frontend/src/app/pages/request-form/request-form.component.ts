@@ -119,6 +119,7 @@ export class RequestFormComponent {
   selectedMaterials: string[] = [];
   selectedExtras: string[] = [];
   successMessage = '';
+  isLoading = false;
 
   ngOnChanges(): void {
 
@@ -270,6 +271,8 @@ export class RequestFormComponent {
       });
     }
 
+    if (this.isLoading) return;
+    this.isLoading = true;
     this.requestService.crear(reqBody).subscribe({
       next: (response) => {
         console.log('Solicitud creada en backend con éxito', response);
@@ -281,6 +284,7 @@ export class RequestFormComponent {
 
         this.successMessage = 'Solicitud enviada correctamente.';
         this.submitted.emit(request);
+        this.isLoading = false;
       },
       error: (err) => {
         console.error('Error al crear solicitud en el backend', err);
@@ -291,6 +295,7 @@ export class RequestFormComponent {
         );
         this.successMessage = 'Solicitud enviada (modo local temporal).';
         this.submitted.emit(request);
+        this.isLoading = false;
       }
     });
   }
