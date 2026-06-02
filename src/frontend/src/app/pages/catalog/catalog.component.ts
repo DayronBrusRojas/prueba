@@ -32,12 +32,14 @@ export function mapProductToModelItem(product: Product): ModelItem {
     imageUrl: product.imageUrl || 'https://via.placeholder.com/400x300?text=' + encodeURIComponent(product.titulo),
     description: product.descripcion || '',
     materials: product.materiales || [],
-    features: [
-      'Elaborado con materiales sostenibles',
-      product.materialesReciclables ? 'Contiene materiales reciclables' : 'Diseno educativo y didactico',
-      'Durabilidad garantizada',
-      'Stock disponible: ' + product.stock
-    ],
+    features: (product.caracteristicas && product.caracteristicas.length > 0)
+      ? product.caracteristicas
+      : [
+          'Elaborado con materiales sostenibles',
+          product.materialesReciclables ? 'Contiene materiales reciclables' : 'Diseno educativo y didactico',
+          'Durabilidad garantizada',
+          'Hecho a mano con atencion al detalle'
+        ],
     rawProduct: product
   };
 }

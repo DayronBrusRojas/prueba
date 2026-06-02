@@ -12,10 +12,10 @@ import { Inicio } from './pages/inicio/inicio';
 import { Nosotros } from './pages/nosotros/nosotros';
 import { MyRequestsComponent } from './pages/my-requests/my-requests.component';
 import { RequestFormComponent, RequestMode, SavedRequest, SessionUser } from './pages/request-form/request-form.component';
-import { BuscadorInteligente } from './pages/shared/components/buscador-inteligente/buscador-inteligente';
 import { AuthService } from './services/auth.service';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 
-type PageView = 'inicio' | 'nosotros' |'catalog' | 'detail' | 'auth' | 'request' | 'requests'|'vendedor';
+type PageView = 'inicio' | 'nosotros' | 'catalog' | 'detail' | 'auth' | 'request' | 'requests' | 'vendedor' | 'reset-password';
 type AuthView = 'login' | 'register';
 
 @Component({
@@ -33,7 +33,7 @@ type AuthView = 'login' | 'register';
     Nosotros,
     MyRequestsComponent,
     RequestFormComponent,
-    BuscadorInteligente
+    ResetPasswordComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
@@ -53,8 +53,17 @@ export class AppComponent implements OnInit, OnDestroy {
   currentUser: SessionUser | null = null;
   requestMode: RequestMode = 'personalizar';
   isStandaloneRequest = false;
+  tokenToReset = '';
 
   ngOnInit(): void {
+    // Check for password reset token in URL query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token && window.location.href.includes('reset-password')) {
+      this.tokenToReset = token;
+      this.page = 'reset-password';
+    }
+
     this.userSub = this.authService.currentUser$.subscribe(user => {
       if (user) {
         this.currentUser = {
@@ -66,13 +75,8 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Si ya hay sesión activa, redirigir según el rol
-    if (this.authService.isLoggedIn()) {
-      const role = this.authService.getUserRole();
-      if (role === 'ADMIN') {
-        this.page = 'vendedor';
-      }
-    }
+    // Al iniciar http://localhost:4200 siempre redirigir a inicio
+    this.page = 'inicio';
   }
 
   ngOnDestroy(): void {
@@ -220,7 +224,7 @@ openStandaloneRequest(): void {
   logout(): void {
     this.authService.logout();
     this.currentUser = null;
-    this.showCatalog();
+    this.showInicio();
   }
   
   showVendedor(): void {
@@ -228,6 +232,12 @@ openStandaloneRequest(): void {
   }
 
   salirPanel(): void {
-    this.page = 'catalog';
+    this.showInicio();
+  }
+
+  handleResetCompleted(): void {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    this.tokenToReset = '';
+    this.showLogin();
   }
 }

@@ -1,6 +1,6 @@
 <main class="page-shell">
   <app-header
-    *ngIf="page !== 'auth' && page !== 'vendedor'"
+    *ngIf="page !== 'auth' && page !== 'vendedor' && page !== 'reset-password'"
     [activePage]="page"
     [isLoggedIn]="!!currentUser"
     [userName]="currentUser?.name || ''"
@@ -9,7 +9,6 @@
     (catalogClicked)="showCatalog()"
     (requestsClicked)="showRequests()"
     (loginClicked)="showLogin()"
-    (loginClicked)="requestAccess('comprar')"
     (registerClicked)="showRegister()"
     (logoutClicked)="logout()"
   ></app-header>
@@ -64,7 +63,7 @@
   ></app-my-requests>
 
   <app-footer
-    *ngIf="page !== 'auth' && page !== 'vendedor'"
+    *ngIf="page !== 'auth' && page !== 'vendedor' && page !== 'reset-password'"
     (catalogClicked)="showCatalog()"
     (loginClicked)="showLogin()"
   ></app-footer>
@@ -73,5 +72,11 @@
     *ngIf="page === 'vendedor'"
     (salir)="salirPanel()">
   </app-navbar-vendedor>
+
+  <app-reset-password
+    *ngIf="page === 'reset-password'"
+    [token]="tokenToReset"
+    (completed)="handleResetCompleted()"
+  ></app-reset-password>
 
 </main>
