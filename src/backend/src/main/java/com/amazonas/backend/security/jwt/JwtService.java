@@ -6,6 +6,7 @@ import java.util.Date;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
@@ -14,11 +15,11 @@ import io.jsonwebtoken.Jwts;
 @Service
 public class JwtService {
 
-    private static final String SECRET_KEY =
-            "amazonas_super_secret_key_2025_backend_jwt_secure_key_must_be_long_enough";
+    @Value("${security.jwt.secret-key}")
+    private String secretKey;
 
-    private static final long EXPIRATION_TIME =
-            1000 * 60 * 60 * 24; // 24 horas
+    @Value("${security.jwt.expiration-time}")
+    private long expirationTime;
 
     // =========================
     // GENERAR CLAVE
@@ -26,7 +27,7 @@ public class JwtService {
 
     private SecretKey getSigningKey() {
 
-        byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
 
         return new SecretKeySpec(
                 keyBytes,
@@ -45,7 +46,7 @@ public class JwtService {
                 .issuedAt(new Date())
                 .expiration(
                         new Date(
-                                System.currentTimeMillis() + EXPIRATION_TIME
+                                System.currentTimeMillis() + expirationTime
                         )
                 )
                 .signWith(getSigningKey())

@@ -33,6 +33,7 @@ export class NavbarVendedorComponent {
   @Output() salir = new EventEmitter<void>();
 
   activeTab: VendedorTab = 'dashboard';
+  mobileMenuOpen = false;
 
   navItems: NavItem[] = [
     { id: 'dashboard',     label: 'Dashboard',        icon: 'grid'        },
@@ -46,6 +47,11 @@ export class NavbarVendedorComponent {
 
   setTab(tab: VendedorTab): void {
     this.activeTab = tab;
+    this.mobileMenuOpen = false;
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
   }
 
   get activeLabel(): string {

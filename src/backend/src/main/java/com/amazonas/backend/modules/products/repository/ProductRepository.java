@@ -52,4 +52,13 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             @Param("productId") UUID productId,
             Pageable pageable
     );
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.imageUrl IS NOT NULL AND p.imageUrl <> ''")
+    long countMaquetasConfiguradas();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.stock > 0")
+    long countMaquetasDisponibles();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.imageUrl IS NULL OR p.imageUrl = ''")
+    long countSinConfigurar();
 }
