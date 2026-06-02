@@ -83,10 +83,16 @@ public class AuthServiceImpl implements AuthService {
                         org.springframework.http.HttpStatus.UNAUTHORIZED, "Usuario no encontrado"));
 
         // Verificar bloqueo temporal
-        if (user.getLockUntil() != null && user.getLockUntil().isAfter(LocalDateTime.now())) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.LOCKED,
-                    "Cuenta bloqueada temporalmente. Intenta nuevamente más tarde.");
+        if (user.getLockUntil() != null) {
+            if (user.getLockUntil().isAfter(LocalDateTime.now())) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.LOCKED,
+                        "Cuenta bloqueada temporalmente. Intenta nuevamente más tarde.");
+            } else {
+                user.setFailedLoginAttempts(0);
+                user.setLockUntil(null);
+                userRepository.save(user);
+            }
         }
 
         // Contraseña inválida

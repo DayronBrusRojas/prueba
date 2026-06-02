@@ -160,10 +160,16 @@ export class Auth implements OnChanges {
       },
       error: (err) => {
         this.isLoading = false;
-        if (err?.status === 409) {
-          this.errorMessage = 'El correo ya se encuentra registrado';
+        const message = typeof err?.error === 'string'
+          ? err.error
+          : (err?.error?.message || err?.message || err?.error);
+
+        if (err?.status === 409 || (message && typeof message === 'string' && message.toLowerCase().includes('registrado'))) {
+          this.errorMessage = 'El correo ya se encuentra registrado.';
+        } else if (message && typeof message === 'string') {
+          this.errorMessage = message;
         } else {
-          this.errorMessage = err?.error?.message || err?.error || 'Error al crear la cuenta. Intenta de nuevo.';
+          this.errorMessage = 'Error al crear la cuenta. Intenta de nuevo.';
         }
       }
     });

@@ -119,6 +119,7 @@ export class RequestFormComponent {
   selectedMaterials: string[] = [];
   selectedExtras: string[] = [];
   successMessage = '';
+  isSubmitting = false;
   isLoading = false;
 
   ngOnChanges(): void {
@@ -198,6 +199,9 @@ export class RequestFormComponent {
   }
 
   submitRequest(): void {
+    if (this.isLoading) return;
+    this.isLoading = true;
+
     const request: SavedRequest = {
       id: Date.now(),
       mode: this.mode,
@@ -271,8 +275,6 @@ export class RequestFormComponent {
       });
     }
 
-    if (this.isLoading) return;
-    this.isLoading = true;
     this.requestService.crear(reqBody).subscribe({
       next: (response) => {
         console.log('Solicitud creada en backend con éxito', response);
