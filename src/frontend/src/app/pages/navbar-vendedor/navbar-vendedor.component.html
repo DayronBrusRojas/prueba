@@ -226,15 +226,7 @@
       }
 
       @case ('solicitudes') {
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">Solicitudes</h2>
-            <p class="section-subtitle">Solicitudes de compra de clientes</p>
-          </div>
-        </div>
-        <div class="placeholder-empty">
-          <p>El módulo de <strong>Solicitudes</strong> se construirá en el siguiente paso.</p>
-        </div>
+        <app-solicitudes (crearPresupuestoEvent)="irAPresupuestoConSolicitud($event)"></app-solicitudes>
       }
 
       @case ('materiales') {
@@ -242,15 +234,7 @@
       }
 
       @case ('presupuestos') {
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">Presupuestos</h2>
-            <p class="section-subtitle">Generación y seguimiento de presupuestos</p>
-          </div>
-        </div>
-        <div class="placeholder-empty">
-          <p>El módulo de <strong>Presupuestos</strong> se construirá en el siguiente paso.</p>
-        </div>
+        <app-presupuestos [solicitudId]="solicitudIdParaPresupuesto"></app-presupuestos>
       }
 
       @case ('pagos') {

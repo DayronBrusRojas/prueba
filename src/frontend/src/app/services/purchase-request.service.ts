@@ -7,7 +7,8 @@ import {
   PurchaseRequestRequest,
   PurchaseRequestResponse,
   UpdateEstadoRequest,
-  EstadoSolicitud
+  EstadoSolicitud,
+  SolicitudParaPresupuestoResponse
 } from '../models/purchase-request.model';
 
 @Injectable({ providedIn: 'root' })
@@ -47,6 +48,12 @@ export class PurchaseRequestService {
   actualizarEstado(id: string, request: UpdateEstadoRequest): Observable<PurchaseRequestResponse> {
     return this.http.put<PurchaseRequestResponse>(
       `${this.API_URL}/admin/purchase-requests/${id}/status`, request
+    );
+  }
+
+  obtenerParaPresupuesto(id: string): Observable<SolicitudParaPresupuestoResponse> {
+    return this.http.get<SolicitudParaPresupuestoResponse>(
+      `${this.API_URL}/admin/purchase-requests/${id}/para-presupuesto`
     );
   }
 }
