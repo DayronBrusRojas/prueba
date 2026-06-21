@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.amazonas.backend.modules.requests.dto.PurchaseRequestRequest;
 import com.amazonas.backend.modules.requests.dto.PurchaseRequestResponse;
+import com.amazonas.backend.modules.requests.dto.SolicitudParaPresupuestoResponse;
 import com.amazonas.backend.modules.requests.dto.UpdateEstadoRequest;
 import com.amazonas.backend.modules.requests.enums.EstadoSolicitud;
 import com.amazonas.backend.modules.requests.service.PurchaseRequestService;
@@ -93,5 +94,17 @@ public class PurchaseRequestController {
             @PathVariable UUID id,
             @RequestBody UpdateEstadoRequest request) {
         return ResponseEntity.ok(purchaseRequestService.actualizarEstado(id, request));
+    }
+
+    /**
+     * GET /api/admin/purchase-requests/{id}/para-presupuesto
+     * Obtiene los datos de una solicitud para crear un presupuesto,
+     * incluyendo los materiales del producto asociado.
+     * Solo accesible para usuarios con rol ADMIN.
+     */
+    @GetMapping("/api/admin/purchase-requests/{id}/para-presupuesto")
+    public ResponseEntity<SolicitudParaPresupuestoResponse> obtenerParaPresupuesto(
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(purchaseRequestService.obtenerParaPresupuesto(id));
     }
 }

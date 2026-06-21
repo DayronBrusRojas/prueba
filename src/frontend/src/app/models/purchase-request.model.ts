@@ -104,3 +104,35 @@ export interface PurchaseRequestResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface MaterialPresupuestoDTO {
+  id: string;
+  nombre: string;
+  unidad: string;
+  costoVenta: number;
+  cantidadSugerida: number;
+  esOpcional: boolean;
+}
+
+export interface MaterialSolicitadoDTO {
+  materialId?: string;
+  nombre: string;
+  unidad?: string;
+  costoVenta?: number;
+  razonPreferencia?: string;
+}
+
+export interface SolicitudParaPresupuestoResponse {
+  id: string;
+  productoNombre: string;
+  descripcionPersonalizacion?: string;
+  isCustom: boolean;
+  clienteNombre: string;
+  createdAt: string;
+  materialesProducto: MaterialPresupuestoDTO[];
+  materialesPreferidos: MaterialSolicitadoDTO[];
+  materialesDeseados?: string;
+  solicitarExplicacion?: boolean;
+  tipoEvento?: string;
+  cantidadPersonas?: number;
+}

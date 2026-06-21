@@ -1,0 +1,290 @@
+<section class="presupuestos-page">
+  <header class="page-header">
+    <div class="header-info">
+      <h1>Calculadora de Presupuestos</h1>
+      <p>Calcula el costo de producción de tus maquetas</p>
+    </div>
+    <button class="btn-nuevo" (click)="nuevoPresupuesto()">
+      <span>+</span> Nuevo Presupuesto
+    </button>
+  </header>
+
+  <div class="content-grid">
+    <div class="form-column">
+      
+      <div class="form-card">
+        <h2 class="card-title">Información del Presupuesto</h2>
+        
+        <div class="form-group">
+          <label for="nombreProyecto">Nombre del Proyecto *</label>
+          <input 
+            type="text" 
+            id="nombreProyecto"
+            placeholder="Ej: Maqueta Sistema Solar - Cliente Juan"
+            [(ngModel)]="nombreProyecto"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea 
+            id="descripcion"
+            placeholder="Detalles del proyecto..."
+            rows="4"
+            [(ngModel)]="descripcion"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h2 class="card-title green">Materiales Requeridos</h2>
+        
+        <div class="custom-notice" *ngIf="isCustom">
+          <span class="notice-icon">🎨</span>
+          <span>Maqueta personalizada - Puedes agregar materiales adicionales</span>
+        </div>
+        
+        <div class="material-selector">
+          <select [(ngModel)]="materialSeleccionado">
+            <option value="">Seleccionar material...</option>
+            <option *ngFor="let mat of materialesDisponibles" [value]="mat.nombre">
+              {{ mat.nombre }} - S/ {{ mat.precio.toFixed(2) }}
+            </option>
+          </select>
+          <input 
+            type="number" 
+            min="1" 
+            [(ngModel)]="cantidadMaterial"
+            class="cantidad-input"
+          >
+          <button class="btn-add" (click)="agregarMaterial()">+</button>
+        </div>
+
+        <div class="materiales-lista" [class.loading]="isLoading">
+          <div class="empty-materiales" *ngIf="materialesAgregados.length === 0 && !isLoading">
+            No hay materiales agregados
+          </div>
+          <div class="loading-materiales" *ngIf="isLoading">
+            Cargando materiales...
+          </div>
+          
+          <div class="material-item" *ngFor="let mat of materialesAgregados" [class.from-product]="mat.esDelProducto" [class.from-solicited]="mat.esSolicitado">
+            <div class="material-info">
+              <span class="material-nombre">
+                {{ mat.nombre }}
+                <span class="material-badge" *ngIf="mat.esDelProducto">Del producto</span>
+                <span class="material-badge solicitado" *ngIf="mat.esSolicitado">Solicitado</span>
+                <span class="material-badge extra" *ngIf="!mat.esDelProducto && !mat.esSolicitado">Extra</span>
+              </span>
+              <span class="material-detalle">{{ mat.cantidad }} x S/ {{ mat.precioUnitario.toFixed(2) }}</span>
+            </div>
+            <div class="material-actions">
+              <span class="material-total">S/ {{ (mat.cantidad * mat.precioUnitario).toFixed(2) }}</span>
+              <button class="btn-remove" (click)="eliminarMaterial(mat.id)" *ngIf="!mat.esDelProducto">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client's Requested Materials Section - Separate card below Materiales Requeridos -->
+      <div class="form-card client-request-card" *ngIf="materialesSolicitados.length > 0 || materialesDeseados">
+        <h2 class="card-title purple">📦 Materiales Solicitados por el Cliente</h2>
+        
+        <div class="client-materials-notice">
+          <span class="notice-icon">💡</span>
+          <span>Estos son los materiales que el cliente ha solicitado. Haz clic en "Agregar" para incluirlos en el presupuesto.</span>
+        </div>
+
+        <!-- Selected materials from list -->
+        <div class="solicited-materials" *ngIf="materialesSolicitados.length > 0">
+          <h3 class="subsection-title">Materiales Extras Seleccionados</h3>
+          <div class="solicited-item" *ngFor="let mat of materialesSolicitados" [class.added]="mat.agregado">
+            <div class="solicited-info">
+              <span class="solicited-nombre">{{ mat.nombre }}</span>
+              <span class="solicited-precio" *ngIf="mat.costoVenta">
+                S/ {{ mat.costoVenta.toFixed(2) }} / {{ mat.unidad || 'unidad' }}
+              </span>
+              <span class="solicited-precio no-price" *ngIf="!mat.costoVenta">
+                Sin precio en inventario
+              </span>
+            </div>
+            <button 
+              class="btn-agregar-solicitado" 
+              (click)="agregarMaterialSolicitado(mat)"
+              [disabled]="mat.agregado"
+            >
+              {{ mat.agregado ? '✓ Agregado' : '+ Agregar' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Free text materials -->
+        <div class="desired-materials" *ngIf="materialesDeseados">
+          <h3 class="subsection-title">Otros Materiales Específicos</h3>
+          <div class="desired-text">
+            <span class="desired-icon">📝</span>
+            <p>{{ materialesDeseados }}</p>
+          </div>
+          <small class="desired-hint">El cliente escribió estos materiales manualmente. Búscalos en tu inventario y agrégalos usando el selector de arriba.</small>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h2 class="card-title">Costos Adicionales</h2>
+        
+        <div class="form-group">
+          <label for="manoObra">Mano de Obra (S/)</label>
+          <input 
+            type="number" 
+            id="manoObra"
+            min="0"
+            [(ngModel)]="manoDeObra"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="margen">Margen de Ganancia (%)</label>
+          <input 
+            type="number" 
+            id="margen"
+            min="0"
+            max="100"
+            [(ngModel)]="margenGanancia"
+          >
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="adelanto-header">
+          <h2 class="card-title">Adelanto</h2>
+          <label class="checkbox-label">
+            <input type="checkbox" [(ngModel)]="requiereAdelanto">
+            Requiere adelanto
+          </label>
+        </div>
+
+        <div class="adelanto-content" *ngIf="requiereAdelanto">
+          <div class="adelanto-warning">
+            <span class="warning-icon">⚠</span>
+            <div class="warning-text">
+              <strong>Adelanto para Pedidos Personalizados</strong>
+              <p>El cliente deberá confirmar el pago del adelanto antes de iniciar la fabricación.</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="porcentaje">Porcentaje del Adelanto (%)</label>
+            <input 
+              type="number" 
+              id="porcentaje"
+              min="0"
+              max="100"
+              [(ngModel)]="porcentajeAdelanto"
+            >
+            <small>Porcentaje del total que se solicita como adelanto (típicamente 50%)</small>
+          </div>
+
+          <div class="adelanto-monto">
+            <div class="monto-label">
+              <span>Monto del Adelanto:</span>
+              <small>{{ porcentajeAdelanto }}% del precio total</small>
+            </div>
+            <span class="monto-value">S/ {{ montoAdelanto.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Servicio de Explicación Section -->
+      <div class="form-card explicacion-card" *ngIf="solicitarExplicacion">
+        <h2 class="card-title orange">🎓 Servicio de Explicación</h2>
+        
+        <div class="explicacion-info">
+          <div class="explicacion-row">
+            <span class="explicacion-label">Modelo:</span>
+            <span class="explicacion-value">{{ tipoEvento || 'No especificado' }}</span>
+          </div>
+          <div class="explicacion-row">
+            <span class="explicacion-label">Personas:</span>
+            <span class="explicacion-value">{{ cantidadPersonas }}</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="duracion">Duración (minutos)</label>
+          <input 
+            type="number" 
+            id="duracion"
+            min="15"
+            step="15"
+            [(ngModel)]="duracionExplicacion"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="precioExplicacion">Precio del Servicio (S/)</label>
+          <input 
+            type="number" 
+            id="precioExplicacion"
+            min="0"
+            [(ngModel)]="precioExplicacion"
+          >
+          <small>{{ explicacionLabel }}</small>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="summary-column">
+      <div class="summary-card">
+        <h2 class="summary-title">
+          <span class="summary-icon">📋</span>
+          Resumen del Presupuesto
+        </h2>
+
+        <div class="summary-row">
+          <span>Materiales:</span>
+          <span>S/ {{ totalMateriales.toFixed(2) }}</span>
+        </div>
+
+        <div class="summary-row">
+          <span>Mano de Obra:</span>
+          <span>S/ {{ manoDeObra.toFixed(2) }}</span>
+        </div>
+
+        <div class="summary-row" *ngIf="solicitarExplicacion">
+          <span>Servicio Explicación:</span>
+          <span>S/ {{ precioExplicacion.toFixed(2) }}</span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span>S/ {{ subtotal.toFixed(2) }}</span>
+        </div>
+
+        <div class="summary-row ganancia">
+          <span>Ganancia ({{ margenGanancia }}%):</span>
+          <span>+ S/ {{ ganancia.toFixed(2) }}</span>
+        </div>
+
+        <div class="summary-total">
+          <span>TOTAL:</span>
+          <span class="total-value">S/ {{ total.toFixed(2) }}</span>
+        </div>
+
+        <div class="adelanto-section" *ngIf="requiereAdelanto">
+          <div class="adelanto-row">
+            <span>Adelanto Requerido:</span>
+            <span class="adelanto-value">S/ {{ montoAdelanto.toFixed(2) }}</span>
+          </div>
+          <small class="adelanto-note">{{ porcentajeAdelanto }}% del total • Requerido para iniciar fabricación</small>
+        </div>
+
+        <button class="btn-guardar" (click)="guardarPresupuesto()">
+          <span>💾</span> Guardar Presupuesto
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

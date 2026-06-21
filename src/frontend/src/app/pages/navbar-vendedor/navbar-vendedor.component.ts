@@ -3,7 +3,9 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { DashboardComponent } from './sections/dashboard/dashboard.component';
 import { MaquetaComponent } from './sections/maqueta/maqueta.component';
 import { GestionStockComponent } from './sections/gestion-stock/gestion-stock.component';
+import { SolicitudesComponent } from './sections/solicitudes/solicitudes.component';
 import { MaterialesComponent } from './sections/materiales/materiales.component';
+import { PresupuestosComponent } from './sections/presupuestos/presupuestos.component';
 
 export type VendedorTab =
   | 'dashboard'
@@ -23,7 +25,7 @@ export interface NavItem {
 @Component({
   selector: 'app-navbar-vendedor',
   standalone: true,
-  imports: [CommonModule, DashboardComponent, MaquetaComponent, GestionStockComponent, MaterialesComponent],
+  imports: [CommonModule, DashboardComponent, MaquetaComponent, GestionStockComponent, SolicitudesComponent, MaterialesComponent, PresupuestosComponent],
   templateUrl: './navbar-vendedor.component.html',
   styleUrl: './navbar-vendedor.component.css',
 })
@@ -34,6 +36,7 @@ export class NavbarVendedorComponent {
 
   activeTab: VendedorTab = 'dashboard';
   mobileMenuOpen = false;
+  solicitudIdParaPresupuesto: string | null = null;
 
   navItems: NavItem[] = [
     { id: 'dashboard',     label: 'Dashboard',        icon: 'grid'        },
@@ -47,6 +50,16 @@ export class NavbarVendedorComponent {
 
   setTab(tab: VendedorTab): void {
     this.activeTab = tab;
+    this.mobileMenuOpen = false;
+    // Clear solicitudId when navigating away from presupuestos
+    if (tab !== 'presupuestos') {
+      this.solicitudIdParaPresupuesto = null;
+    }
+  }
+
+  irAPresupuestoConSolicitud(solicitudId: string): void {
+    this.solicitudIdParaPresupuesto = solicitudId;
+    this.activeTab = 'presupuestos';
     this.mobileMenuOpen = false;
   }
 
