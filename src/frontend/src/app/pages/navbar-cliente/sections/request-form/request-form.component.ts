@@ -244,15 +244,20 @@ export class RequestFormComponent {
       isKit: false,
       isCustom: this.isCustomization,
       descripcionPersonalizacion: this.isCustomization ? this.form.description : undefined,
-      materialesDeseados: this.isCustomization
-        ? [this.form.otherMaterials, ...this.selectedExtras].filter(Boolean).join(', ')
+      materialesDeseados: this.isCustomization && this.form.otherMaterials
+        ? this.form.otherMaterials
         : undefined,
       solicitarExplicacion: this.form.explanation,
       tipoEvento: this.form.explanation ? this.form.explanationType : undefined,
       cantidadPersonas: this.form.explanation && this.requiresExplanationPeople ? this.form.explanationPeople : undefined,
       materialesCustomizados: [],
       materialesPersonales: [],
-      materialesPreferidos: []
+      materialesPreferidos: this.isCustomization && this.selectedExtras.length > 0
+        ? this.selectedExtras.map(extraName => ({
+            materialName: extraName,
+            razonPreferencia: 'Material extra seleccionado por el cliente'
+          }))
+        : []
     };
 
     if (this.isCustomization && this.model?.rawProduct?.materialesDetalle) {

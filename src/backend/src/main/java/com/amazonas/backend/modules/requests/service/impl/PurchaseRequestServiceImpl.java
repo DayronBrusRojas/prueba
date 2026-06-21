@@ -190,6 +190,71 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         return toResponse(purchaseRequestRepository.save(solicitud));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public SolicitudParaPresupuestoResponse obtenerParaPresupuesto(UUID id) {
+        PurchaseRequest solicitud = purchaseRequestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada: " + id));
+
+        // Force initialization of lazy collections
+        solicitud.getMaterialesPreferidos().size();
+        if (solicitud.getProducto() != null) {
+            solicitud.getProducto().getMateriales().size();
+        }
+
+        SolicitudParaPresupuestoResponse resp = new SolicitudParaPresupuestoResponse();
+        resp.setId(solicitud.getId());
+        resp.setProductoNombre(solicitud.getProductoNombre());
+        resp.setDescripcionPersonalizacion(solicitud.getDescripcionPersonalizacion());
+        resp.setIsCustom(solicitud.getIsCustom());
+        resp.setClienteNombre(solicitud.getClienteNombre());
+        resp.setCreatedAt(solicitud.getCreatedAt());
+
+        // Get materials from the associated product
+        if (solicitud.getProducto() != null) {
+            List<SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO> materiales = 
+                solicitud.getProducto().getMateriales().stream()
+                    .map(pm -> new SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO(
+                        pm.getMaterial().getId(),
+                        pm.getMaterial().getNombre(),
+                        pm.getMaterial().getUnidad(),
+                        pm.getMaterial().getCostoVenta(),
+                        pm.getCantidadSugerida(),
+                        pm.getEsOpcional()
+                    ))
+                    .collect(Collectors.toList());
+            resp.setMaterialesProducto(materiales);
+        } else {
+            resp.setMaterialesProducto(List.of());
+        }
+
+        // Get client's preferred materials (selected from list)
+        List<SolicitudParaPresupuestoResponse.MaterialSolicitadoDTO> materialesPreferidos = 
+            solicitud.getMaterialesPreferidos().stream()
+                .map(pref -> {
+                    Material mat = pref.getMaterial();
+                    return new SolicitudParaPresupuestoResponse.MaterialSolicitadoDTO(
+                        mat != null ? mat.getId() : null,
+                        pref.getMaterialName(),
+                        mat != null ? mat.getUnidad() : null,
+                        mat != null ? mat.getCostoVenta() : null,
+                        pref.getRazonPreferencia()
+                    );
+                })
+                .collect(Collectors.toList());
+        resp.setMaterialesPreferidos(materialesPreferidos);
+
+        // Get client's desired materials (free text)
+        resp.setMaterialesDeseados(solicitud.getMaterialesDeseados());
+
+        // Servicio de explicación
+        resp.setSolicitarExplicacion(solicitud.getSolicitarExplicacion());
+        resp.setTipoEvento(solicitud.getTipoEvento());
+        resp.setCantidadPersonas(solicitud.getCantidadPersonas());
+
+        return resp;
+    }
+
     // ─────────────────────────────────────────────────────────
     // MAPPER
     // ─────────────────────────────────────────────────────────

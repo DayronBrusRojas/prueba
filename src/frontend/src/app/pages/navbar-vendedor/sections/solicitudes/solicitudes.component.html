@@ -1,0 +1,142 @@
+<section class="solicitudes-page">
+  <header class="page-header">
+    <h1>Solicitudes de Compra</h1>
+    <p>Gestiona las solicitudes de tus clientes</p>
+  </header>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-info">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{{ totalSolicitudes }}</span>
+      </div>
+      <span class="stat-icon cart-icon">&#128722;</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <span class="stat-label">Pendientes</span>
+        <span class="stat-value pending">{{ pendientes }}</span>
+      </div>
+      <span class="stat-badge pending">{{ pendientes }}</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <span class="stat-label">Procesando</span>
+        <span class="stat-value processing">{{ procesando }}</span>
+      </div>
+      <span class="stat-badge processing">{{ procesando }}</span>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <span class="stat-label">Completados</span>
+        <span class="stat-value completed">{{ completados }}</span>
+      </div>
+      <span class="stat-badge completed">{{ completados }}</span>
+    </div>
+  </div>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <span class="search-icon">&#128269;</span>
+      <input 
+        type="text" 
+        placeholder="Buscar por producto, cliente o correo..."
+        [(ngModel)]="searchTerm"
+      >
+    </div>
+
+    <div class="filter-tabs">
+      <button 
+        [class.active]="activeFilter === 'todos'"
+        (click)="setFilter('todos')">
+        Todos
+      </button>
+      <button 
+        [class.active]="activeFilter === 'pendientes'"
+        (click)="setFilter('pendientes')">
+        Pendientes
+      </button>
+      <button 
+        [class.active]="activeFilter === 'procesando'"
+        (click)="setFilter('procesando')">
+        Procesando
+      </button>
+      <button 
+        [class.active]="activeFilter === 'completados'"
+        (click)="setFilter('completados')">
+        Completados
+      </button>
+    </div>
+  </div>
+
+  <div class="expand-controls">
+    <button (click)="expandAll()">
+      <span>&#8964;</span> Expandir Todo
+    </button>
+    <button (click)="collapseAll()">
+      <span>&#8963;</span> Colapsar Todo
+    </button>
+  </div>
+
+  <div class="solicitudes-list">
+    <article 
+      class="solicitud-card" 
+      *ngFor="let solicitud of filteredSolicitudes"
+      [class.expanded]="solicitud.expanded"
+    >
+      <div class="card-header" (click)="toggleExpand(solicitud)">
+        <h2>{{ solicitud.productoNombre }}</h2>
+        <div class="header-right">
+          <span class="status-badge" [class]="solicitud.estado">
+            {{ getEstadoLabel(solicitud.estado) }}
+          </span>
+          <span class="expand-icon">{{ solicitud.expanded ? '&#8963;' : '&#8964;' }}</span>
+        </div>
+      </div>
+
+      <div class="card-content" *ngIf="solicitud.expanded">
+        <div class="client-info">
+          <div class="info-row">
+            <span class="info-icon">&#128100;</span>
+            <span class="info-label">Cliente:</span>
+            <span class="info-value">{{ solicitud.clienteNombre }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-icon">&#128197;</span>
+            <span class="info-label">Fecha:</span>
+            <span class="info-value">{{ solicitud.fecha | date:'d \'de\' MMMM \'de\' yyyy \'a las\' hh:mm a' }}</span>
+          </div>
+        </div>
+
+        <div class="contact-info">
+          <div class="info-row">
+            <span class="info-icon">&#9993;</span>
+            <span class="info-label">Email:</span>
+            <span class="info-value email">{{ solicitud.clienteEmail }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-icon">&#128222;</span>
+            <span class="info-label">Teléfono:</span>
+            <span class="info-value">{{ solicitud.clienteTelefono }}</span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn-communicate" (click)="comunicarCliente(solicitud)">
+            <span>&#128172;</span> Comunicar con Cliente
+          </button>
+          <button class="btn-budget" (click)="crearPresupuesto(solicitud)">
+            <span>&#128196;</span> Crear Presupuesto
+          </button>
+        </div>
+      </div>
+    </article>
+
+    <div class="empty-state" *ngIf="filteredSolicitudes.length === 0">
+      <p>No se encontraron solicitudes con los filtros aplicados.</p>
+    </div>
+  </div>
+</section>
