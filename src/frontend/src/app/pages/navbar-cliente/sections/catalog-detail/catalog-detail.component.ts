@@ -63,9 +63,8 @@ function ensureCompleteModel(model: ModelItem): ModelItem {
 export class CatalogDetailComponent implements OnChanges {
   @Input({ required: true }) model!: ModelItem;
   @Output() back = new EventEmitter<void>();
-  @Output() accessRequested = new EventEmitter<'comprar' | 'personalizar'>();
+  @Output() accessRequested = new EventEmitter<{ mode: 'comprar' | 'personalizar', model: ModelItem }>();
   @Output() relatedSelected = new EventEmitter<ModelItem>();
-  @Output() modelLoaded = new EventEmitter<ModelItem>();
 
   private readonly maquetaService = inject(MaquetaService);
 
@@ -95,7 +94,6 @@ export class CatalogDetailComponent implements OnChanges {
       next: (product) => {
         if (product && product.id) {
           this.detailedModel = mapProductToModelItemDetail(product);
-          this.modelLoaded.emit(this.detailedModel);
         }
         this.isLoading = false;
       },

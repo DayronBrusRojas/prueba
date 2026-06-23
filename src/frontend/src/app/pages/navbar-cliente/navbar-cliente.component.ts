@@ -126,22 +126,23 @@ export class NavbarClienteComponent implements OnInit, OnDestroy {
     });
   }
 
-  requestAccess(action: RequestMode): void {
+  requestAccess(event: { mode: RequestMode, model: ModelItem }): void {
     this.isStandaloneRequest = false;
-
+    this.selectedModel = event.model;
+ 
     if (this.currentUser) {
-      this.openRequest(action);
+      this.openRequest(event.mode);
       return;
     }
-
+ 
     this.previousPage = this.page === 'auth'
       ? this.previousPage
       : this.page;
-
-    this.accessNotice = action === 'comprar'
+ 
+    this.accessNotice = event.mode === 'comprar'
       ? 'Para comprar una maqueta debes iniciar sesion o registrarte.'
       : 'Para personalizar tu maqueta debes iniciar sesion o registrarte.';
-
+ 
     this.authView = 'login';
     this.page = 'auth';
   }
