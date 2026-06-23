@@ -222,6 +222,17 @@ export class RequestFormComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
+    // Validar duplicidad de materiales seleccionados (si es personalización)
+    if (this.isCustomization && this.selectedMaterials && this.selectedMaterials.length > 0) {
+      const nonNullMaterials = this.selectedMaterials.filter(m => !!m).map(m => m.trim().toLowerCase());
+      const uniqueMaterials = new Set(nonNullMaterials);
+      if (uniqueMaterials.size !== nonNullMaterials.length) {
+        this.errorMessage = 'No se permiten materiales duplicados. Cada material seleccionado debe ser único.';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+
     // Validar teléfono del cliente (Perú: 9 dígitos numéricos)
     const rawPhone = this.form.phone || '';
     let cleanPhone = rawPhone.replace(/\D/g, '');

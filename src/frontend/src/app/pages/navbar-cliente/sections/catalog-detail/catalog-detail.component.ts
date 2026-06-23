@@ -65,6 +65,7 @@ export class CatalogDetailComponent implements OnChanges {
   @Output() back = new EventEmitter<void>();
   @Output() accessRequested = new EventEmitter<'comprar' | 'personalizar'>();
   @Output() relatedSelected = new EventEmitter<ModelItem>();
+  @Output() modelLoaded = new EventEmitter<ModelItem>();
 
   private readonly maquetaService = inject(MaquetaService);
 
@@ -94,6 +95,7 @@ export class CatalogDetailComponent implements OnChanges {
       next: (product) => {
         if (product && product.id) {
           this.detailedModel = mapProductToModelItemDetail(product);
+          this.modelLoaded.emit(this.detailedModel);
         }
         this.isLoading = false;
       },

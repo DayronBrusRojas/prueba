@@ -15,6 +15,7 @@
 <app-catalog *ngIf="page === 'catalog'" [preselectedCategory]="preselectedCategory" (viewDetails)="showDetails($event)"></app-catalog>
 
 <app-catalog-detail *ngIf="page === 'detail'" [model]="selectedModel" (back)="showCatalog()"
+  (modelLoaded)="selectedModel = $event"
   (accessRequested)="requestAccess($event)" (relatedSelected)="showDetails($event)"></app-catalog-detail>
 
 <app-auth *ngIf="page === 'auth'" [accessNotice]="accessNotice" [initialView]="authView" (closed)="closeAuth()"

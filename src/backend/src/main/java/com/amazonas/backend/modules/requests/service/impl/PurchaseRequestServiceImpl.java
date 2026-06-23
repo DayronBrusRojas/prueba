@@ -55,6 +55,45 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
     @Override
     public PurchaseRequestResponse crear(PurchaseRequestRequest req, String usuarioEmail) {
+        // Validar duplicidad de materiales seleccionados (si es personalización)
+        if (Boolean.TRUE.equals(req.getIsCustom())) {
+            java.util.Set<String> materialNames = new java.util.HashSet<>();
+            java.util.Set<UUID> materialIds = new java.util.HashSet<>();
+
+            if (req.getMaterialesCustomizados() != null) {
+                for (KitCustomizedMaterialRequest matReq : req.getMaterialesCustomizados()) {
+                    if (matReq.getMaterialId() != null) {
+                        if (!materialIds.add(matReq.getMaterialId())) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se permiten materiales duplicados.");
+                        }
+                        Material dbM = materialRepository.findById(matReq.getMaterialId()).orElse(null);
+                        if (dbM != null) {
+                            if (!materialNames.add(dbM.getNombre().trim().toLowerCase())) {
+                                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se permiten materiales duplicados.");
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (req.getMaterialesPersonales() != null) {
+                for (KitPersonalMaterialRequest perReq : req.getMaterialesPersonales()) {
+                    if (perReq.getMaterialName() != null && !perReq.getMaterialName().trim().isEmpty()) {
+                        String normName = perReq.getMaterialName().trim().toLowerCase();
+                        if (!materialNames.add(normName)) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se permiten materiales duplicados.");
+                        }
+                        Optional<Material> dbMatOpt = materialRepository.findByNombreIgnoreCase(normName);
+                        if (dbMatOpt.isPresent()) {
+                            if (!materialIds.add(dbMatOpt.get().getId())) {
+                                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se permiten materiales duplicados.");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         User usuario = userRepository.findByEmail(usuarioEmail)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + usuarioEmail));
 
@@ -234,6 +273,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         // Force initialization of lazy collections
         solicitud.getMaterialesPreferidos().size();
         solicitud.getMaterialesCustomizados().size();
+        solicitud.getMaterialesPersonales().size();
         if (solicitud.getProducto() != null) {
             solicitud.getProducto().getMateriales().size();
         }
