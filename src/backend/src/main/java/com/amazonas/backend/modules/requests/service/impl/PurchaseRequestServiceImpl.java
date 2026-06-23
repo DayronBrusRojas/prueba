@@ -215,6 +215,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
 
         // Force initialization of lazy collections
         solicitud.getMaterialesPreferidos().size();
+        solicitud.getMaterialesCustomizados().size();
         if (solicitud.getProducto() != null) {
             solicitud.getProducto().getMateriales().size();
         }
@@ -229,8 +230,21 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         resp.setClienteTelefono(solicitud.getClienteTelefono());
         resp.setCreatedAt(solicitud.getCreatedAt());
 
-        // Get materials from the associated product
-        if (solicitud.getProducto() != null) {
+        // Get materials: if request has custom materials chosen by client, use them. Otherwise default to product's original materials.
+        if (solicitud.getMaterialesCustomizados() != null && !solicitud.getMaterialesCustomizados().isEmpty()) {
+            List<SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO> materiales = 
+                solicitud.getMaterialesCustomizados().stream()
+                    .map(cm -> new SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO(
+                        cm.getMaterial() != null ? cm.getMaterial().getId() : null,
+                        cm.getMaterialName(),
+                        cm.getMaterialUnit(),
+                        cm.getCostoUnitarioReferencia(),
+                        cm.getCantidad(),
+                        false
+                    ))
+                    .collect(Collectors.toList());
+            resp.setMaterialesProducto(materiales);
+        } else if (solicitud.getProducto() != null) {
             List<SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO> materiales = 
                 solicitud.getProducto().getMateriales().stream()
                     .map(pm -> new SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO(

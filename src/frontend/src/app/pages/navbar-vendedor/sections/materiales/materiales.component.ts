@@ -168,6 +168,11 @@ export class MaterialesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (/\d/.test(this.formData.unidad)) {
+      alert('La unidad de medida no debe contener números (ej. usa "hoja", "kg", "paquete").');
+      return;
+    }
+
     this.saving = true;
     const request: MaterialRequest = {
       nombre: this.formData.nombre,
