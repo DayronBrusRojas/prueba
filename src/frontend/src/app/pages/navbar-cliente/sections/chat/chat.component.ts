@@ -85,8 +85,8 @@ export class ChatComponent implements OnInit, OnDestroy, OnChanges, AfterViewChe
   private shouldScrollToBottom: boolean = false;
 
   ngOnInit(): void {
-    this.currentUserEmail = localStorage.getItem('auth_email') || '';
-    this.currentUserName = localStorage.getItem('auth_nombre') || '';
+    this.currentUserEmail = sessionStorage.getItem('auth_email') || '';
+    this.currentUserName = sessionStorage.getItem('auth_nombre') || '';
     // Forzar rol CLIENTE en la sección de cliente para corregir identidad del emisor
     this.currentUserRole = ChatSenderRole.CLIENT;
 

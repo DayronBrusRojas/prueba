@@ -71,8 +71,8 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
   newMessage = '';
   loadingChat = false;
   wsConnected = false;
-  currentUserEmail = localStorage.getItem('auth_email') || '';
-  currentUserName = localStorage.getItem('auth_nombre') || '';
+  currentUserEmail = sessionStorage.getItem('auth_email') || '';
+  currentUserName = sessionStorage.getItem('auth_nombre') || '';
 
   // ── File Attachments State ──
   preloadedFiles: { file: File, previewUrl: string | null, isImage: boolean }[] = [];
