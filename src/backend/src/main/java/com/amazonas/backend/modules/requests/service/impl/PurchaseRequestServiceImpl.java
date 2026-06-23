@@ -2,7 +2,9 @@ package com.amazonas.backend.modules.requests.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -134,6 +136,22 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         // ─── Flujo 3: Materiales Personales (texto libre) ───
         if (req.getMaterialesPersonales() != null) {
             for (KitPersonalMaterialRequest perReq : req.getMaterialesPersonales()) {
+                if (perReq.getMaterialName() != null) {
+                    Optional<Material> dbMatOpt = materialRepository.findByNombreIgnoreCase(perReq.getMaterialName().trim());
+                    if (dbMatOpt.isPresent()) {
+                        Material material = dbMatOpt.get();
+                        KitCustomizedMaterial kitMat = new KitCustomizedMaterial(
+                                solicitud,
+                                material,
+                                material.getNombre(),
+                                material.getUnidad(),
+                                perReq.getCantidad(),
+                                material.getCostoVenta()
+                        );
+                        solicitud.getMaterialesCustomizados().add(kitMat);
+                        continue;
+                    }
+                }
                 KitPersonalMaterial kitPer = new KitPersonalMaterial(
                         solicitud,
                         perReq.getMaterialName(),
@@ -230,9 +248,10 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
         resp.setClienteTelefono(solicitud.getClienteTelefono());
         resp.setCreatedAt(solicitud.getCreatedAt());
 
-        // Get materials: if request has custom materials chosen by client, use them. Otherwise default to product's original materials.
+        // Get materials: if request has custom or personal materials chosen by client, use them. Otherwise default to product's original materials.
+        List<SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO> materiales = new ArrayList<>();
         if (solicitud.getMaterialesCustomizados() != null && !solicitud.getMaterialesCustomizados().isEmpty()) {
-            List<SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO> materiales = 
+            materiales.addAll(
                 solicitud.getMaterialesCustomizados().stream()
                     .map(cm -> new SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO(
                         cm.getMaterial() != null ? cm.getMaterial().getId() : null,
@@ -242,10 +261,33 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         cm.getCantidad(),
                         false
                     ))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList())
+            );
+        }
+        if (solicitud.getMaterialesPersonales() != null && !solicitud.getMaterialesPersonales().isEmpty()) {
+            materiales.addAll(
+                solicitud.getMaterialesPersonales().stream()
+                    .map(pm -> {
+                        Material dbMat = pm.getMaterialName() != null 
+                            ? materialRepository.findByNombreIgnoreCase(pm.getMaterialName().trim()).orElse(null) 
+                            : null;
+                        return new SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO(
+                            dbMat != null ? dbMat.getId() : null,
+                            pm.getMaterialName(),
+                            dbMat != null ? dbMat.getUnidad() : "Unidad",
+                            dbMat != null ? dbMat.getCostoVenta() : BigDecimal.ZERO,
+                            pm.getCantidad() != null ? pm.getCantidad() : BigDecimal.ONE,
+                            false
+                        );
+                    })
+                    .collect(Collectors.toList())
+            );
+        }
+
+        if (!materiales.isEmpty()) {
             resp.setMaterialesProducto(materiales);
         } else if (solicitud.getProducto() != null) {
-            List<SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO> materiales = 
+            List<SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO> originalMateriales = 
                 solicitud.getProducto().getMateriales().stream()
                     .map(pm -> new SolicitudParaPresupuestoResponse.MaterialPresupuestoDTO(
                         pm.getMaterial().getId(),
@@ -256,7 +298,7 @@ public class PurchaseRequestServiceImpl implements PurchaseRequestService {
                         pm.getEsOpcional()
                     ))
                     .collect(Collectors.toList());
-            resp.setMaterialesProducto(materiales);
+            resp.setMaterialesProducto(originalMateriales);
         } else {
             resp.setMaterialesProducto(List.of());
         }

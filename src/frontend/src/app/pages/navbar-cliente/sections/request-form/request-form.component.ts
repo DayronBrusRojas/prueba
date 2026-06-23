@@ -121,6 +121,7 @@ export class RequestFormComponent {
   explanationModels = ['Individual', 'Grupal', 'Salon'];
 
   selectedMaterials: string[] = [];
+  materialDropdownOptions: string[][] = [];
   selectedExtras: string[] = [];
   successMessage = '';
   errorMessage = '';
@@ -134,6 +135,22 @@ export class RequestFormComponent {
     // Evita error si model aún no existe
     if (this.model?.materials) {
       this.selectedMaterials = this.model.materials.slice(0, 4);
+
+      // Generate the options for each slot
+      this.materialDropdownOptions = [];
+      const originalMaterials = this.model.materials.slice(0, 4);
+      for (let i = 0; i < 4; i++) {
+        const orig = originalMaterials[i];
+        if (orig) {
+          if (!this.materialOptions.includes(orig)) {
+            this.materialDropdownOptions.push([orig, ...this.materialOptions]);
+          } else {
+            this.materialDropdownOptions.push([...this.materialOptions]);
+          }
+        } else {
+          this.materialDropdownOptions.push([...this.materialOptions]);
+        }
+      }
 
       while (
         this.selectedMaterials.length < 4 &&

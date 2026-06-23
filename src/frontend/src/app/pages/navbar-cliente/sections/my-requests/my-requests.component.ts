@@ -57,7 +57,10 @@ export class MyRequestsComponent implements OnChanges {
       detail: res.isCustom ? res.descripcionPersonalizacion || '' : res.mensaje || '',
       explanation: res.solicitarExplicacion,
       date: res.createdAt,
-      selectedMaterials: res.materialesCustomizados?.map((m: any) => m.materialName) || []
+      selectedMaterials: [
+        ...(res.materialesCustomizados?.map((m: any) => m.materialName) || []),
+        ...(res.materialesPersonales?.map((m: any) => m.materialName) || [])
+      ]
     }));
   }
 

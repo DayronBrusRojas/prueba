@@ -47,7 +47,7 @@
               <span>Original: {{ original }}</span>
             </div>
             <select [name]="'material' + i" [(ngModel)]="selectedMaterials[i]">
-              <option *ngFor="let material of materialOptions" [value]="material">
+              <option *ngFor="let material of (materialDropdownOptions[i] || materialOptions)" [value]="material">
                 {{ material }}{{ material === original ? ' (Original)' : '' }}
               </option>
             </select>
