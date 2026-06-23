@@ -441,6 +441,12 @@ export class PresupuestosComponent implements OnChanges, OnInit {
   guardarPresupuesto(): void {
     if (!this.solicitudId) return;
 
+    const tieneMaterialSinRegistrar = this.materialesAgregados.some(m => !m.materialId);
+    if (tieneMaterialSinRegistrar) {
+      alert('Tienes materiales en la lista que no están registrados en el inventario. Por favor, regístralos o selecciónalos del buscador antes de guardar.');
+      return;
+    }
+
     if (this.solicitarExplicacion) {
       if (!this.cantidadPersonas || this.cantidadPersonas <= 0) {
         alert('La cantidad de personas para el servicio de explicación debe ser mayor a 0.');
@@ -510,6 +516,13 @@ export class PresupuestosComponent implements OnChanges, OnInit {
 
   enviarPresupuestoAlCliente(): void {
     if (!this.solicitudId) return;
+
+    const tieneMaterialSinRegistrar = this.materialesAgregados.some(m => !m.materialId);
+    if (tieneMaterialSinRegistrar) {
+      alert('Tienes materiales en la lista que no están registrados en el inventario. Por favor, regístralos o selecciónalos del buscador antes de guardar y enviar.');
+      return;
+    }
+
     if (!this.roomId) {
       alert('No se encontró una sala de chat activa para esta solicitud.');
       return;

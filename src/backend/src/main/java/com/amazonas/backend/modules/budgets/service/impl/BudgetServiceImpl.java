@@ -49,14 +49,17 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Override
     public BudgetResponse crear(BudgetRequest req) {
+        if (req.getSolicitudId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El ID de la solicitud es obligatorio.");
+        }
         PurchaseRequest solicitud = purchaseRequestRepository.findById(req.getSolicitudId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Solicitud no encontrada: " + req.getSolicitudId()));
-
+ 
         // Validar unicidad: solo 1 presupuesto por solicitud
         if (budgetRepository.existsBySolicitudId(solicitud.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Esta solicitud ya tiene un presupuesto. Use el endpoint de edición.");
         }
-
+ 
         Budget budget = buildBudget(req, solicitud);
         Budget saved = budgetRepository.save(budget);
         return toResponse(saved);
@@ -80,32 +83,40 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Override
     public BudgetResponse actualizar(UUID budgetId, BudgetRequest req) {
+        if (budgetId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El ID del presupuesto es obligatorio.");
+        }
         Budget budget = budgetRepository.findById(budgetId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Presupuesto no encontrado: " + budgetId));
-
+ 
         budget.setNombre(req.getNombre());
         budget.setDescripcion(req.getDescripcion());
         if (req.getManoDeObra() != null) budget.setManoDeObra(req.getManoDeObra());
         if (req.getMargenGanancia() != null) budget.setMargenGanancia(req.getMargenGanancia());
         if (req.getAdelantoRequerido() != null) budget.setAdelantoRequerido(req.getAdelantoRequerido());
         if (req.getAdelantoPorcentaje() != null) budget.setAdelantoPorcentaje(req.getAdelantoPorcentaje());
-
+ 
         // Actualizar items de forma segura para no violar el constraint único uq_budget_material
         if (req.getItems() != null) {
+            for (BudgetItemRequest itemReq : req.getItems()) {
+                if (itemReq.getMaterialId() == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El ID de cada material es obligatorio en los items del presupuesto.");
+                }
+            }
             java.util.Set<UUID> solicitadosMaterialIds = req.getItems().stream()
                     .map(BudgetItemRequest::getMaterialId)
                     .collect(Collectors.toSet());
-
+ 
             // Eliminar items que ya no están solicitados
             budget.getItems().removeIf(item -> !solicitadosMaterialIds.contains(item.getMaterial().getId()));
-
+ 
             // Actualizar existentes o agregar nuevos
             for (BudgetItemRequest itemReq : req.getItems()) {
                 BudgetItem existente = budget.getItems().stream()
                         .filter(item -> item.getMaterial().getId().equals(itemReq.getMaterialId()))
                         .findFirst()
                         .orElse(null);
-
+ 
                 if (existente != null) {
                     existente.setCantidad(itemReq.getCantidad());
                     existente.setCostoUnitario(existente.getMaterial().getCostoVenta());
@@ -166,8 +177,11 @@ public class BudgetServiceImpl implements BudgetService {
         // Items del presupuesto — snapshot de costoVenta del material
         if (req.getItems() != null) {
             for (BudgetItemRequest itemReq : req.getItems()) {
+                if (itemReq.getMaterialId() == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El ID de cada material es obligatorio en los items del presupuesto.");
+                }
                 Material material = materialRepository.findById(itemReq.getMaterialId())
-                        .orElseThrow(() -> new RuntimeException("Material no encontrado: " + itemReq.getMaterialId()));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material no encontrado: " + itemReq.getMaterialId()));
                 BudgetItem item = new BudgetItem(budget, material, itemReq.getCantidad(), material.getCostoVenta());
                 budget.getItems().add(item);
             }
