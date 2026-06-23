@@ -83,6 +83,16 @@ export class MaterialesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAllData();
+    this.materialService.triggerAddMaterial$.subscribe(data => {
+      if (data) {
+        this.isAdding = true;
+        this.editingId = null;
+        this.resetMaterialForm();
+        this.formData.nombre = data.nombre;
+        this.formData.unidad = data.unidad || '';
+        this.materialService.clearTriggerAddMaterial();
+      }
+    });
   }
 
   loadAllData(): void {

@@ -36,6 +36,7 @@ export class PresupuestosComponent implements OnChanges, OnInit {
 
   @Input() solicitudId: string | null = null;
   @Output() volverEvent = new EventEmitter<void>();
+  @Output() navegarATabEvent = new EventEmitter<any>();
 
   private readonly requestService = inject(PurchaseRequestService);
   private readonly chatService = inject(ChatService);
@@ -402,6 +403,14 @@ export class PresupuestosComponent implements OnChanges, OnInit {
       esSolicitado: true
     });
     mat.agregado = true;
+  }
+
+  irARegistrarMaterial(mat: MaterialSolicitado): void {
+    this.materialService.triggerAddMaterial({
+      nombre: mat.nombre,
+      unidad: mat.unidad
+    });
+    this.navegarATabEvent.emit('materiales');
   }
 
   toggleExplicacion(): void {

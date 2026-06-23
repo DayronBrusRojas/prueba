@@ -181,9 +181,22 @@
               <span class="solicited-precio" *ngIf="mat.costoVenta">S/ {{ mat.costoVenta.toFixed(2) }} / {{ mat.unidad || 'unidad' }}</span>
               <span class="solicited-precio no-price" *ngIf="!mat.costoVenta">Sin precio en inventario</span>
             </div>
-            <button class="btn-agregar-solicitado" (click)="agregarMaterialSolicitado(mat)" [disabled]="mat.agregado">
-              {{ mat.agregado ? '✓ Agregado' : '+ Agregar' }}
-            </button>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <button 
+                *ngIf="!mat.costoVenta"
+                type="button"
+                class="btn-registrar-material" 
+                (click)="irARegistrarMaterial(mat)"
+                style="height: 34px; padding: 0 12px; background: #f0fdf4; color: #166534; border: 1.5px solid #bbf7d0; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;"
+                onmouseover="this.style.background='#dcfce7'; this.style.borderColor='#86efac'"
+                onmouseout="this.style.background='#f0fdf4'; this.style.borderColor='#bbf7d0'"
+              >
+                ⚙️ Registrar
+              </button>
+              <button class="btn-agregar-solicitado" (click)="agregarMaterialSolicitado(mat)" [disabled]="mat.agregado">
+                {{ mat.agregado ? '✓ Agregado' : '+ Agregar' }}
+              </button>
+            </div>
           </div>
         </div>
         <div class="desired-materials" *ngIf="materialesDeseados">

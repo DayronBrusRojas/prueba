@@ -249,7 +249,8 @@
       @case ('presupuestos') {
         <app-presupuestos 
           [solicitudId]="solicitudIdParaPresupuesto"
-          (volverEvent)="volverAlChat()">
+          (volverEvent)="volverAlChat()"
+          (navegarATabEvent)="setTab($event)">
         </app-presupuestos>
       }
 
