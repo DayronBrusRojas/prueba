@@ -1,0 +1,263 @@
+<section class="payments-page">
+    <header class="payments-header">
+        <div>
+            <span class="eyebrow">Amazonas S.A.C</span>
+            <h1>Flujos de pago</h1>
+            <p>Registro de transacciones, saldos pendientes e historial de caja.</p>
+        </div>
+        <div class="cash-pill">
+            <span>Ventas del dia</span>
+            <strong>S/ {{ dailyTotal | number: '1.2-2' }}</strong>
+        </div>
+    </header>
+
+    <div class="payments-layout">
+        <form class="payment-card register-card" (ngSubmit)="registerTransaction()">
+            <div class="card-title-row">
+                <div>
+                    <h2>Registrar transaccion de pago</h2>
+                    <p>Registra abonos de solicitudes con datos de cliente y materiales elegidos.</p>
+                </div>
+                <div class="mode-toggle" aria-label="Modo de llenado">
+                    <button type="button" [class.active]="formMode === 'chat'" (click)="setFormMode('chat')">Llenado
+                        desde Chat</button>
+                    <button type="button" [class.active]="formMode === 'manual'"
+                        (click)="setFormMode('manual')">Formulario Vacio</button>
+                </div>
+            </div>
+
+            <div class="form-grid two">
+                <label>
+                    Nombre completo del cliente
+                    <input type="text" name="client" [(ngModel)]="paymentForm.client">
+                </label>
+
+                <label>
+                    Correo electronico
+                    <input type="email" name="email" [(ngModel)]="paymentForm.email">
+                </label>
+
+                <label>
+                    Telefono / celular
+                    <input type="tel" name="phone" [(ngModel)]="paymentForm.phone">
+                </label>
+
+                <label>
+                    Tipo de maqueta / producto
+                    <select name="productType" [(ngModel)]="paymentForm.productType">
+                        <option value="" disabled>Seleccionar producto...</option>
+                        <option *ngFor="let type of productTypes" [value]="type">{{ type }}</option>
+                    </select>
+                </label>
+            </div>
+
+            <label class="wide-label">
+                Materiales requeridos / separados por coma
+                <input type="text" name="materials" [(ngModel)]="paymentForm.materials">
+            </label>
+
+            <div class="form-grid three">
+                <label>
+                    Monto transaccion
+                    <input type="number" name="amount" min="0" step="0.01" [(ngModel)]="paymentForm.amount">
+                </label>
+
+                <label>
+                    Metodo de pago
+                    <select name="method" [(ngModel)]="paymentForm.method">
+                        <option value="" disabled>Seleccionar metodo...</option>
+                        <option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</option>
+                    </select>
+                </label>
+
+                <label>
+                    Tipo de abono
+                    <select name="kind" [(ngModel)]="paymentForm.kind">
+                        <option value="" disabled>Seleccionar abono...</option>
+                        <option *ngFor="let kind of paymentKinds" [value]="kind">{{ kind }}</option>
+                    </select>
+                </label>
+            </div>
+
+            <label class="inventory-check">
+                <input type="checkbox" name="inventory" [(ngModel)]="paymentForm.inventory">
+                <span>
+                    <strong>Descontar automaticamente del inventario</strong>
+                    <small>Actualiza stock de materiales usados al registrar.</small>
+                </span>
+            </label>
+
+            <div class="form-grid two">
+                <label>
+                    Fecha transaccion
+                    <input type="datetime-local" name="date" [(ngModel)]="paymentForm.date">
+                </label>
+
+                <label>
+                    Codigo operacion / comentario
+                    <input type="text" name="operation" [(ngModel)]="paymentForm.operation">
+                </label>
+            </div>
+
+            <button class="primary-action" type="submit">
+                <span aria-hidden="true">S/</span>
+                Registrar y persistir transaccion
+            </button>
+        </form>
+
+        <aside class="side-stack">
+            <section class="pending-card">
+                <div class="compact-title">
+                    <h2>Saldos pendientes</h2>
+                    <span>{{ pendingBalances.length }} pendientes</span>
+                </div>
+
+                <div class="pending-list">
+                    <article class="pending-item" *ngFor="let balance of pendingBalances">
+                        <div>
+                            <h3>{{ balance.client }}</h3>
+                            <p>{{ balance.project }}</p>
+                            <small>Fecha limite: {{ balance.dueDate }}</small>
+                        </div>
+                        <div class="pending-amount">
+                            <span>{{ balance.method }}</span>
+                            <strong>S/ {{ balance.amount | number: '1.2-2' }}</strong>
+                            <button type="button" (click)="collectBalance(balance)">Cobrar saldo</button>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="payment-card history-card">
+                <div class="history-heading">
+                    <h2>Historial de transacciones</h2>
+                    <button class="export-button" type="button" (click)="exportCsv()">{{ exportLabel }}</button>
+                </div>
+
+                <div class="filters-row">
+                    <label class="search-control">
+                        <span aria-hidden="true">&#128269;</span>
+                        <input type="search" name="searchTerm" placeholder="Buscar cliente..." [(ngModel)]="searchTerm">
+                    </label>
+
+                    <select name="methodFilter" [(ngModel)]="selectedMethodFilter" aria-label="Filtrar metodo">
+                        <option *ngFor="let method of methodFilters" [value]="method">{{ method }}</option>
+                    </select>
+
+                    <select name="kindFilter" [(ngModel)]="selectedKindFilter" aria-label="Filtrar abono">
+                        <option *ngFor="let kind of kindFilters" [value]="kind">{{ kind }}</option>
+                    </select>
+                </div>
+
+                <div class="transaction-list">
+                    <article class="transaction-item" *ngFor="let transaction of filteredTransactions">
+                        <div class="transaction-main">
+                            <div>
+                                <h3>{{ transaction.client }}</h3>
+                                <dl>
+                                    <div>
+                                        <dt>Tipo de maqueta</dt>
+                                        <dd>{{ transaction.productType }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt>Materiales</dt>
+                                        <dd>{{ transaction.materials }}</dd>
+                                    </div>
+                                </dl>
+                                <small>Op: {{ transaction.operation }}</small>
+                            </div>
+
+                            <div class="transaction-payment">
+                                <span [class.online]="transaction.status === 'online'">{{ transaction.method }}</span>
+                                <strong>{{ transaction.kind }} (S/ {{ transaction.amount | number: '1.2-2' }})</strong>
+                            </div>
+                        </div>
+
+                        <div class="transaction-actions">
+                            <button type="button" (click)="openReceipt(transaction)">Recibo</button>
+                            <button class="danger" type="button"
+                                (click)="cancelTransaction(transaction)">Anular</button>
+                            <time>{{ transaction.date }}</time>
+                        </div>
+                    </article>
+                </div>
+
+                <footer class="daily-indicators">
+                    <div>
+                        <span>Ventas totales</span>
+                        <strong>S/ {{ dailyTotal | number: '1.2-2' }}</strong>
+                    </div>
+                    <div>
+                        <span>Met. online</span>
+                        <strong>{{ onlineCount }} reg</strong>
+                    </div>
+                    <div>
+                        <span>Met. fisico</span>
+                        <strong>{{ physicalCount }} reg</strong>
+                    </div>
+                </footer>
+            </section>
+        </aside>
+    </div>
+</section>
+
+<div class="receipt-backdrop" *ngIf="selectedReceipt" (click)="closeReceipt()">
+    <section class="receipt-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+        aria-label="Comprobante de caja">
+        <header>
+            <h2>Comprobante de caja - Amazonas</h2>
+            <button type="button" aria-label="Cerrar recibo" (click)="closeReceipt()">&times;</button>
+        </header>
+
+        <div class="receipt-brand">
+            <h3>AMAZONAS S.A.C</h3>
+            <p>Taller de maquetas especializadas</p>
+            <small>Av. Javier Prado Este 1520 - San Isidro, Lima</small>
+            <span>R.U.C. 20601245893</span>
+        </div>
+
+        <dl class="receipt-data">
+            <div>
+                <dt>Cliente:</dt>
+                <dd>{{ selectedReceipt.client }}</dd>
+            </div>
+            <div>
+                <dt>Email:</dt>
+                <dd>{{ selectedReceipt.email }}</dd>
+            </div>
+            <div>
+                <dt>Metodo de Pago:</dt>
+                <dd>{{ selectedReceipt.method }}</dd>
+            </div>
+            <div>
+                <dt>Tipo de Abono:</dt>
+                <dd>{{ selectedReceipt.kind }}</dd>
+            </div>
+            <div>
+                <dt>Operacion / Ref:</dt>
+                <dd>{{ selectedReceipt.operation }}</dd>
+            </div>
+            <div>
+                <dt>Fecha Emision:</dt>
+                <dd>{{ selectedReceipt.date }}</dd>
+            </div>
+        </dl>
+
+        <section class="materials-box">
+            <span>Materiales comprometidos</span>
+            <p>{{ selectedReceipt.materials }}</p>
+        </section>
+
+        <section class="receipt-total">
+            <span>Monto registrado<br>Moneda Nacional PEN</span>
+            <strong>S/ {{ selectedReceipt.amount | number: '1.2-2' }}</strong>
+        </section>
+
+        <p class="thanks">*** Gracias por su preferencia ***</p>
+
+        <footer>
+            <button type="button">Imprimir</button>
+            <button type="button" (click)="closeReceipt()">Listo</button>
+        </footer>
+    </section>
+</div>
