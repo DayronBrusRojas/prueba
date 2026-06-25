@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ModelItem } from '../../../data/model';
 import { PurchaseRequestService } from '../../../../services/purchase-request.service';
 import { PurchaseRequestRequest } from '../../../../models/purchase-request.model';
+import { MaterialService } from '../../../../services/material.service';
 
 export type RequestMode = 'personalizar' | 'comprar';
 
@@ -39,9 +40,10 @@ export interface SavedRequest {
   templateUrl: './request-form.component.html',
   styleUrl: './request-form.component.css'
 })
-export class RequestFormComponent {
+export class RequestFormComponent implements OnInit {
 
   private readonly requestService = inject(PurchaseRequestService);
+  private readonly materialService = inject(MaterialService);
 
   @Input({ required: true }) model!: ModelItem;
   @Input({ required: true }) mode!: RequestMode;
@@ -126,15 +128,37 @@ export class RequestFormComponent {
   successMessage = '';
   errorMessage = '';
 
-  ngOnChanges(): void {
+  ngOnInit(): void {
+    this.materialService.getAllMaterials().subscribe({
+      next: (mats) => {
+        if (mats && mats.length > 0) {
+          const activeMats = mats.filter(m => m.activo !== false).map(m => m.nombre);
+          if (activeMats.length > 0) {
+            this.materialOptions = activeMats;
+            this.additionalMaterials = [...activeMats];
+            this.regenerateDropdownOptions(false);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error fetching materials from DB, using fallback hardcoded list:', err);
+      }
+    });
+  }
 
+  ngOnChanges(): void {
     this.form.fullName = this.user?.name || this.form.fullName || 'Juan';
     this.form.email = this.user?.email || this.form.email || 'juan@gmail.com';
     this.form.phone = this.form.phone || '+51 999 999 999';
 
-    // Evita error si model aún no existe
+    this.regenerateDropdownOptions(true);
+  }
+
+  regenerateDropdownOptions(resetSelected: boolean): void {
     if (this.model?.materials) {
-      this.selectedMaterials = this.model.materials.slice(0, 4);
+      if (resetSelected || !this.selectedMaterials || this.selectedMaterials.length === 0) {
+        this.selectedMaterials = this.model.materials.slice(0, 4);
+      }
 
       // Generate the options for each slot
       this.materialDropdownOptions = [];

@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/admin/files/upload").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/materials").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/material-categories").authenticated()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/purchase-requests/**").authenticated()
                         .requestMatchers("/api/budgets/**").authenticated()
