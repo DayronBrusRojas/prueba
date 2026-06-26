@@ -8,6 +8,8 @@ import { catchError, throwError } from 'rxjs';
 const PUBLIC_GET_PATTERNS = [
   /^\/api\/products(\/|$)/,
   /^\/api\/products$/,
+  /^\/api\/admin\/materials(\/|$)/,
+  /^\/api\/admin\/material-categories(\/|$)/,
 ];
 
 function isPublicGetRequest(method: string, url: string): boolean {
