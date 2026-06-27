@@ -32,4 +32,10 @@ public class PaymentController {
     public ResponseEntity<DailyStatsResponse> getDailyStats() {
         return ResponseEntity.ok(paymentService.getDailyStats());
     }
+
+    @Operation(summary = "Obtener todas las transacciones de pago")
+    @GetMapping
+    public ResponseEntity<java.util.List<com.amazonas.backend.modules.payments.dto.PaymentTransactionResponse>> getAllTransactions() {
+        return ResponseEntity.ok(paymentService.getAllTransactions());
+    }
 }

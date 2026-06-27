@@ -255,15 +255,10 @@
       }
 
       @case ('pagos') {
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">Pagos</h2>
-            <p class="section-subtitle">Historial y gestión de pagos</p>
-          </div>
-        </div>
-        <div class="placeholder-empty">
-          <p>El módulo de <strong>Pagos</strong> se construirá en el siguiente paso.</p>
-        </div>
+        <app-flujodepagos 
+          [prefilledData]="selectedPaymentData"
+          (pagoRegistrado)="selectedPaymentData = null">
+        </app-flujodepagos>
       }
 
     }

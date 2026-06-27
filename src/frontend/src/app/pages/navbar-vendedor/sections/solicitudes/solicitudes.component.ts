@@ -46,7 +46,7 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
   @Input() inicialSolicitudId: string | null = null;
   @Output() crearPresupuestoEvent = new EventEmitter<string>();
   @Output() chatIniciado = new EventEmitter<void>();
-  @Output() navegarAPagosEvent = new EventEmitter<string>();
+  @Output() navegarAPagosEvent = new EventEmitter<any>();
   @Output() chatActivoEvent = new EventEmitter<boolean>();
 
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
@@ -384,8 +384,43 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
   }
 
   solicitarAdelantoRapido(): void {
-    if (this.solicitudActiva) {
-      this.navegarAPagosEvent.emit(this.solicitudActiva.id);
+    if (this.solicitudActiva && this.room) {
+      const total = this.room.agreedPrice || 375.70;
+      const half = total / 2;
+      const paymentData = {
+        client: this.room.clientName,
+        email: this.room.clientEmail,
+        phone: this.solicitudActiva.clienteTelefono || '987654321',
+        productType: this.solicitudActiva.isCustom ? 'Proyecto Personalizado (Maqueta a Medida)' : 'Proyecto Predeterminado (Catalogo)',
+        materials: this.solicitudActiva.materialesDeseados || 'Madera Balsa, PLA, Acrilico',
+        amount: half,
+        method: 'Online (Yape / Transferencia)',
+        kind: 'Adelanto (50%)',
+        date: new Date().toISOString().substring(0, 16),
+        operation: `SOL-RAP-${Date.now()}`,
+        inventory: true,
+        roomId: this.room.id,
+        solicitudId: this.room.requestId,
+        voucherUrl: ''
+      };
+      this.navegarAPagosEvent.emit(paymentData);
+    } else if (this.solicitudActiva) {
+      const paymentData = {
+        client: this.solicitudActiva.clienteNombre,
+        email: '',
+        phone: this.solicitudActiva.clienteTelefono || '987654321',
+        productType: this.solicitudActiva.isCustom ? 'Proyecto Personalizado (Maqueta a Medida)' : 'Proyecto Predeterminado (Catalogo)',
+        materials: this.solicitudActiva.materialesDeseados || 'Madera Balsa, PLA, Acrilico',
+        amount: null,
+        method: '',
+        kind: '',
+        date: new Date().toISOString().substring(0, 16),
+        operation: `SOL-RAP-${Date.now()}`,
+        inventory: true,
+        solicitudId: this.solicitudActiva.id,
+        voucherUrl: ''
+      };
+      this.navegarAPagosEvent.emit(paymentData);
     }
   }
 
@@ -647,5 +682,38 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
         alert('Hubo un error al registrar el pago. Por favor, asegúrate de que el cliente esté registrado en la base de datos.');
       }
     });
+  }
+
+  irAPagosConVoucher(msg: ChatMessageResponse): void {
+    if (!this.room) return;
+    let parsedMeta: any = {};
+    try {
+      parsedMeta = JSON.parse(msg.metadata);
+    } catch (e) {
+      console.error('Error parsing voucher metadata', e);
+    }
+
+    const total = this.room.agreedPrice || 375.70;
+    const half = total / 2;
+
+    const paymentData = {
+      client: this.room.clientName,
+      email: this.room.clientEmail,
+      phone: this.solicitudActiva?.clienteTelefono || '987654321',
+      productType: this.solicitudActiva?.isCustom ? 'Proyecto Personalizado (Maqueta a Medida)' : 'Proyecto Predeterminado (Catalogo)',
+      materials: this.solicitudActiva?.materialesDeseados || 'Madera Balsa, PLA, Acrilico',
+      amount: half,
+      method: 'Online (Yape / Transferencia)',
+      kind: 'Adelanto (50%)',
+      date: new Date().toISOString().substring(0, 16), // Format: yyyy-MM-ddTHH:mm
+      operation: parsedMeta.fileName || `YAPE-OPE-${Date.now()}`,
+      inventory: true,
+      roomId: this.room.id,
+      solicitudId: this.room.requestId,
+      messageId: msg.id,
+      voucherUrl: parsedMeta.fileUrl || ''
+    };
+
+    this.navegarAPagosEvent.emit(paymentData);
   }
 }

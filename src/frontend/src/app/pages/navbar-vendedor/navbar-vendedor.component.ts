@@ -6,6 +6,7 @@ import { GestionStockComponent } from './sections/gestion-stock/gestion-stock.co
 import { SolicitudesComponent } from './sections/solicitudes/solicitudes.component';
 import { MaterialesComponent } from './sections/materiales/materiales.component';
 import { PresupuestosComponent } from './sections/presupuestos/presupuestos.component';
+import { FlujoDePagosComponent } from './sections/flujo-pagos/flujodepagos.component';
 
 export type VendedorTab =
   | 'dashboard'
@@ -25,7 +26,16 @@ export interface NavItem {
 @Component({
   selector: 'app-navbar-vendedor',
   standalone: true,
-  imports: [CommonModule, DashboardComponent, MaquetaComponent, GestionStockComponent, SolicitudesComponent, MaterialesComponent, PresupuestosComponent],
+  imports: [
+    CommonModule, 
+    DashboardComponent, 
+    MaquetaComponent, 
+    GestionStockComponent, 
+    SolicitudesComponent, 
+    MaterialesComponent, 
+    PresupuestosComponent,
+    FlujoDePagosComponent
+  ],
   templateUrl: './navbar-vendedor.component.html',
   styleUrl: './navbar-vendedor.component.css',
 })
@@ -74,7 +84,10 @@ export class NavbarVendedorComponent {
     this.solicitudIdParaChat = this.solicitudIdParaPresupuesto;
   }
 
-  navegarAPagos(solicitudId: string): void {
+  selectedPaymentData: any = null;
+
+  navegarAPagos(paymentData: any): void {
+    this.selectedPaymentData = paymentData;
     this.activeTab = 'pagos';
   }
 

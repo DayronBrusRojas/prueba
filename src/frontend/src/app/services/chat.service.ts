@@ -83,6 +83,14 @@ export class ChatService {
     return this.http.post<any>(`${API_BASE_URL}/payments`, request);
   }
 
+  getDailyStats(): Observable<any> {
+    return this.http.get<any>(`${API_BASE_URL}/payments/stats/daily`);
+  }
+
+  getAllTransactions(): Observable<any[]> {
+    return this.http.get<any[]>(`${API_BASE_URL}/payments`);
+  }
+
 
   // =========================================================================
   // WEBSOCKET STOMP METHODS

@@ -547,8 +547,8 @@
                               <span class="material-icons text-[12px]">zoom_in</span>
                               Ver Detalle
                             </button>
-                            <button type="button" [disabled]="room?.status === 'CLOSED'" (click)="confirmarPagoDesdeChat(msg)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-all cursor-pointer text-center border-none shadow-sm flex items-center justify-center gap-1">
-                              <span class="material-icons text-[12px]">task_alt</span>
+                            <button type="button" [disabled]="room?.status === 'CLOSED'" (click)="irAPagosConVoucher(msg)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 rounded-lg transition-all cursor-pointer text-center border-none shadow-sm flex items-center justify-center gap-1">
+                              <span class="material-icons text-[12px]">payment</span>
                               Confirmar Pago
                             </button>
                           </div>
