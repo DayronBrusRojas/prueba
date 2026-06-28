@@ -168,7 +168,7 @@ export class NavbarClienteComponent implements OnInit, OnDestroy {
   }
 
   showLogin(): void {
-    this.previousPage = 'catalog';
+    this.previousPage = this.page === 'auth' ? this.previousPage : this.page;
     this.accessNotice = '';
     this.authView = 'login';
     this.page = 'auth';
@@ -199,7 +199,7 @@ export class NavbarClienteComponent implements OnInit, OnDestroy {
     if (role === 'ADMIN') {
       this.openVendorPanel.emit();
     } else {
-      this.showCatalog();
+      this.page = this.previousPage;
     }
   }
 
@@ -235,7 +235,9 @@ export class NavbarClienteComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authService.logout();
     this.currentUser = null;
-    this.showInicio();
+    if (this.page === 'requests' || this.page === 'request') {
+      this.showInicio();
+    }
   }
 
   handleResetCompleted(): void {
