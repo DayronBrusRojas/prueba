@@ -1,10 +1,17 @@
-.payments-page {
-    min-height: 100vh;
-    padding: 34px clamp(18px, 5vw, 70px) 72px;
+:host {
+    display: block;
+    height: 100%;
+    overflow-y: auto;
+    box-sizing: border-box;
     background:
         radial-gradient(circle at top left, rgba(0, 169, 130, 0.12), transparent 30%),
         linear-gradient(180deg, #f7fbf9 0%, #eef4f1 100%);
+}
+
+.payments-page {
+    padding: 34px clamp(18px, 5vw, 70px) 72px;
     color: #243244;
+    box-sizing: border-box;
 }
 
 .payments-header {
@@ -849,4 +856,165 @@
     .receipt-data dd {
         text-align: left;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOCKED FORM & VOUCHER PREVIEW STYLES
+   ═══════════════════════════════════════════════════════════════ */
+.prefilled-lock-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 14px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(13, 148, 136, 0.3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.05);
+}
+
+.prefilled-lock-banner .lock-icon {
+    font-size: 28px;
+    color: #0d9488;
+    background: #ffffff;
+    border-radius: 50%;
+    padding: 6px;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.12);
+}
+
+.prefilled-lock-banner .banner-text {
+    flex: 1;
+}
+
+.prefilled-lock-banner .banner-text strong {
+    display: block;
+    color: #0f766e;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.prefilled-lock-banner .banner-text p {
+    margin: 4px 0 0;
+    color: #134e4a;
+    font-size: 12px;
+    line-height: 1.4;
+    text-transform: none;
+}
+
+.prefilled-lock-banner .btn-unlock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px solid #0d9488;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0d9488;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.prefilled-lock-banner .btn-unlock:hover {
+    background: #0d9488;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(13, 148, 136, 0.2);
+}
+
+.locked-input {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    color: #475569 !important;
+    cursor: not-allowed !important;
+    font-weight: 500 !important;
+}
+
+.locked-input:focus {
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Voucher Preview Styles */
+.voucher-preview-section {
+    margin-bottom: 24px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px;
+    background: #f8fafc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.voucher-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+}
+
+.voucher-preview-header .material-icons {
+    color: #0ea5e9;
+}
+
+.voucher-preview-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.voucher-link-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 40px;
+    border: 1.5px solid #0ea5e9;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0ea5e9;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.voucher-link-button:hover {
+    background: #0ea5e9;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+}
+
+.voucher-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px;
+    background: #ffffff;
+    overflow: hidden;
+    max-height: 220px;
+}
+
+.voucher-thumbnail {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 6px;
+    transition: transform 0.3s ease;
+}
+
+.voucher-thumbnail:hover {
+    transform: scale(1.03);
+    cursor: zoom-in;
 }

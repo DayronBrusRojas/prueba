@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { MaterialService } from '../../../../services/material.service';
 import { MaquetaService } from '../../../../services/maqueta.service';
 import { Material, MaterialCategory, MaterialRequest } from '../../../../models/material.model';
@@ -35,14 +36,15 @@ interface PrecioMaqueta {
   templateUrl: './materiales.component.html',
   styleUrl: './materiales.component.css'
 })
-export class MaterialesComponent implements OnInit {
+export class MaterialesComponent implements OnInit, OnDestroy {
   private readonly materialService = inject(MaterialService);
   private readonly maquetaService = inject(MaquetaService);
+
+  private triggerSub?: Subscription;
 
   materials: Material[] = [];
   categories: MaterialCategory[] = [];
   products: Product[] = [];
-
   loading = false;
   saving = false;
 
@@ -83,6 +85,22 @@ export class MaterialesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAllData();
+    this.triggerSub = this.materialService.triggerAddMaterial$.subscribe(data => {
+      if (data) {
+        this.isAdding = true;
+        this.editingId = null;
+        this.resetMaterialForm();
+        this.formData.nombre = data.nombre;
+        this.formData.unidad = data.unidad || '';
+        this.materialService.clearTriggerAddMaterial();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.triggerSub) {
+      this.triggerSub.unsubscribe();
+    }
   }
 
   loadAllData(): void {
@@ -147,6 +165,11 @@ export class MaterialesComponent implements OnInit {
   handleSave(): void {
     if (!this.formData.nombre || !this.formData.unidad || !this.formData.categoriaId) {
       alert('Por favor, completa los campos obligatorios: Nombre, Unidad y Categoría.');
+      return;
+    }
+
+    if (/\d/.test(this.formData.unidad)) {
+      alert('La unidad de medida no debe contener números (ej. usa "hoja", "kg", "paquete").');
       return;
     }
 
