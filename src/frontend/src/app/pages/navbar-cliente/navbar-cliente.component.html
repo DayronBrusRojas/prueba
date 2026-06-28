@@ -10,7 +10,7 @@
 <app-nosotros *ngIf="page === 'nosotros'" (catalogClicked)="showCatalog()"></app-nosotros>
 
 <app-categories *ngIf="page === 'categories'" (categorySelected)="handleCategoryFromHeader($event)"
-  (modelSelected)="showDetails($event)"></app-categories>
+  (modelSelected)="showDetails($event)" (loginRequested)="showLogin()" (requestSubmitted)="showRequests()"></app-categories>
 
 <app-catalog *ngIf="page === 'catalog'" [preselectedCategory]="preselectedCategory"
   (viewDetails)="showDetails($event)"></app-catalog>
