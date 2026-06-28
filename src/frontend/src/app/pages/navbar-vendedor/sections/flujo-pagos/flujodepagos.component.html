@@ -18,33 +18,57 @@
                     <h2>Registrar transaccion de pago</h2>
                     <p>Registra abonos de solicitudes con datos de cliente y materiales elegidos.</p>
                 </div>
-                <div class="mode-toggle" aria-label="Modo de llenado">
-                    <button type="button" [class.active]="formMode === 'chat'" (click)="setFormMode('chat')">Llenado
-                        desde Chat</button>
-                    <button type="button" [class.active]="formMode === 'manual'"
-                        (click)="setFormMode('manual')">Formulario Vacio</button>
+            </div>
+
+            <!-- Lock Banner when prefilled from Chat -->
+            <div *ngIf="isPrefilled" class="prefilled-lock-banner">
+                <span class="material-icons lock-icon">lock</span>
+                <div class="banner-text">
+                    <strong>Datos importados desde el chat del cliente</strong>
+                    <p>Campos bloqueados para garantizar la integridad del acuerdo. Para registrar una venta manual diferente:</p>
+                </div>
+                <button type="button" class="btn-unlock" (click)="resetForm()">
+                    <span class="material-icons">restart_alt</span>
+                    Limpiar / Nuevo
+                </button>
+            </div>
+
+            <!-- Voucher Attachment Preview -->
+            <div *ngIf="paymentForm.voucherUrl" class="voucher-preview-section">
+                <div class="voucher-preview-header">
+                    <span class="material-icons">receipt_long</span>
+                    <strong>Comprobante adjunto por el cliente:</strong>
+                </div>
+                <div class="voucher-preview-body">
+                    <a [href]="paymentForm.voucherUrl" target="_blank" class="voucher-link-button">
+                        <span class="material-icons">open_in_new</span>
+                        Ver comprobante completo
+                    </a>
+                    <div class="voucher-image-container" *ngIf="paymentForm.voucherUrl.endsWith('.png') || paymentForm.voucherUrl.endsWith('.jpg') || paymentForm.voucherUrl.endsWith('.jpeg') || paymentForm.voucherUrl.endsWith('.webp') || paymentForm.voucherUrl.includes('image') || paymentForm.voucherUrl.includes('cloudinary')">
+                        <img [src]="paymentForm.voucherUrl" alt="Comprobante de pago" class="voucher-thumbnail">
+                    </div>
                 </div>
             </div>
 
             <div class="form-grid two">
                 <label>
                     Nombre completo del cliente
-                    <input type="text" name="client" [(ngModel)]="paymentForm.client">
+                    <input type="text" name="client" [(ngModel)]="paymentForm.client" [readonly]="isPrefilled" [class.locked-input]="isPrefilled">
                 </label>
 
                 <label>
                     Correo electronico
-                    <input type="email" name="email" [(ngModel)]="paymentForm.email">
+                    <input type="email" name="email" [(ngModel)]="paymentForm.email" [readonly]="isPrefilled" [class.locked-input]="isPrefilled">
                 </label>
 
                 <label>
                     Telefono / celular
-                    <input type="tel" name="phone" [(ngModel)]="paymentForm.phone">
+                    <input type="tel" name="phone" [(ngModel)]="paymentForm.phone" [readonly]="isPrefilled" [class.locked-input]="isPrefilled">
                 </label>
 
                 <label>
                     Tipo de maqueta / producto
-                    <select name="productType" [(ngModel)]="paymentForm.productType">
+                    <select name="productType" [(ngModel)]="paymentForm.productType" [disabled]="isPrefilled" [class.locked-input]="isPrefilled">
                         <option value="" disabled>Seleccionar producto...</option>
                         <option *ngFor="let type of productTypes" [value]="type">{{ type }}</option>
                     </select>
@@ -53,18 +77,18 @@
 
             <label class="wide-label">
                 Materiales requeridos / separados por coma
-                <input type="text" name="materials" [(ngModel)]="paymentForm.materials">
+                <input type="text" name="materials" [(ngModel)]="paymentForm.materials" [readonly]="isPrefilled" [class.locked-input]="isPrefilled">
             </label>
 
             <div class="form-grid three">
                 <label>
                     Monto transaccion
-                    <input type="number" name="amount" min="0" step="0.01" [(ngModel)]="paymentForm.amount">
+                    <input type="number" name="amount" min="0" step="0.01" [(ngModel)]="paymentForm.amount" [readonly]="isPrefilled" [class.locked-input]="isPrefilled">
                 </label>
 
                 <label>
                     Metodo de pago
-                    <select name="method" [(ngModel)]="paymentForm.method">
+                    <select name="method" [(ngModel)]="paymentForm.method" [disabled]="isPrefilled" [class.locked-input]="isPrefilled">
                         <option value="" disabled>Seleccionar metodo...</option>
                         <option *ngFor="let method of paymentMethods" [value]="method">{{ method }}</option>
                     </select>
@@ -72,7 +96,7 @@
 
                 <label>
                     Tipo de abono
-                    <select name="kind" [(ngModel)]="paymentForm.kind">
+                    <select name="kind" [(ngModel)]="paymentForm.kind" [disabled]="isPrefilled" [class.locked-input]="isPrefilled">
                         <option value="" disabled>Seleccionar abono...</option>
                         <option *ngFor="let kind of paymentKinds" [value]="kind">{{ kind }}</option>
                     </select>
@@ -90,12 +114,12 @@
             <div class="form-grid two">
                 <label>
                     Fecha transaccion
-                    <input type="datetime-local" name="date" [(ngModel)]="paymentForm.date">
+                    <input type="datetime-local" name="date" [(ngModel)]="paymentForm.date" [readonly]="isPrefilled" [class.locked-input]="isPrefilled">
                 </label>
 
                 <label>
                     Codigo operacion / comentario
-                    <input type="text" name="operation" [(ngModel)]="paymentForm.operation">
+                    <input type="text" name="operation" [(ngModel)]="paymentForm.operation" [readonly]="isPrefilled" [class.locked-input]="isPrefilled">
                 </label>
             </div>
 

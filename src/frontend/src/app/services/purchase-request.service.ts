@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { API_BASE_URL } from '../config/api.config';
 import {
@@ -17,6 +17,9 @@ export class PurchaseRequestService {
   private readonly http = inject(HttpClient);
   private readonly API_URL = API_BASE_URL;
 
+  // Signal cache for "mis solicitudes"
+  readonly misSolicitudes = signal<PurchaseRequestResponse[]>([]);
+
   crear(request: PurchaseRequestRequest): Observable<PurchaseRequestResponse> {
     return this.http.post<PurchaseRequestResponse>(
       `${this.API_URL}/purchase-requests`, request
@@ -26,6 +29,8 @@ export class PurchaseRequestService {
   listarMisSolicitudes(): Observable<PurchaseRequestResponse[]> {
     return this.http.get<PurchaseRequestResponse[]>(
       `${this.API_URL}/purchase-requests/my`
+    ).pipe(
+      tap(solicitudes => this.misSolicitudes.set(solicitudes))
     );
   }
 
@@ -54,6 +59,12 @@ export class PurchaseRequestService {
   obtenerParaPresupuesto(id: string): Observable<SolicitudParaPresupuestoResponse> {
     return this.http.get<SolicitudParaPresupuestoResponse>(
       `${this.API_URL}/admin/purchase-requests/${id}/para-presupuesto`
+    );
+  }
+
+  actualizarArchivos(id: string, files: { grabacionesUrls: string[], archivosUrls: string[] }): Observable<PurchaseRequestResponse> {
+    return this.http.put<PurchaseRequestResponse>(
+      `${this.API_URL}/purchase-requests/${id}/files`, files
     );
   }
 }

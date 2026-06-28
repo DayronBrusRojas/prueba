@@ -1,8 +1,17 @@
+:host {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
 /* Container & Header */
 .materials-container {
   display: flex;
   flex-direction: column;
   gap: 28px;
+  padding: 24px 32px 40px;
+  box-sizing: border-box;
   animation: fadeIn 0.3s ease-out;
 }
 
