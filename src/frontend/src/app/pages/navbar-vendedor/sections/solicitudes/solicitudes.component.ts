@@ -716,4 +716,39 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
 
     this.navegarAPagosEvent.emit(paymentData);
   }
+
+  isImageFile(fileType?: string): boolean {
+    if (!fileType) return false;
+    return fileType.toLowerCase().startsWith('image/');
+  }
+
+  getFileIcon(fileType?: string): string {
+    if (!fileType) return 'insert_drive_file';
+    const type = fileType.toLowerCase();
+    if (type === 'application/pdf') {
+      return 'picture_as_pdf';
+    }
+    if (
+      type === 'application/msword' ||
+      type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ) {
+      return 'description';
+    }
+    return 'insert_drive_file';
+  }
+
+  getFileIconColorClass(fileType?: string): string {
+    if (!fileType) return 'text-slate-400';
+    const type = fileType.toLowerCase();
+    if (type === 'application/pdf') {
+      return 'text-red-500';
+    }
+    if (
+      type === 'application/msword' ||
+      type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ) {
+      return 'text-blue-500';
+    }
+    return 'text-slate-400';
+  }
 }
