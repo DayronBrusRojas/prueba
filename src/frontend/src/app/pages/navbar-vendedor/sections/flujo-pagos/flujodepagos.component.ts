@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, OnChanges, Input, Output, EventEmitter, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ChatService } from '../../../../services/chat.service';
+import { PurchaseRequestService } from '../../../../services/purchase-request.service';
 
 type PaymentMethod = 'Online' | 'Fisico';
 type PaymentKind = 'Abono' | 'Adelanto' | 'Saldo' | 'Total';
-type FormMode = 'chat' | 'manual';
 
 interface PaymentForm {
     client: string;
@@ -18,6 +19,7 @@ interface PaymentForm {
     date: string;
     operation: string;
     inventory: boolean;
+    voucherUrl?: string;
 }
 
 interface PendingBalance {
@@ -27,6 +29,7 @@ interface PendingBalance {
     method: PaymentMethod;
     amount: number;
     dueDate: string;
+    solicitudId?: string;
 }
 
 interface Transaction {
@@ -49,26 +52,31 @@ interface Transaction {
     templateUrl: './flujodepagos.component.html',
     styleUrl: './flujodepagos.component.css'
 })
-export class FlujoDePagosComponent {
-    formMode: FormMode = 'chat';
+export class FlujoDePagosComponent implements OnInit, OnChanges {
+    private readonly chatService = inject(ChatService);
+    private readonly requestService = inject(PurchaseRequestService);
+
+    @Input() prefilledData: any = null;
+    @Output() pagoRegistrado = new EventEmitter<void>();
+
     selectedReceipt: Transaction | null = null;
     exportLabel = 'Exportar CSV';
+    isPrefilled = false;
 
-    private readonly chatPaymentForm: PaymentForm = {
-        client: 'Carlos Mendoza Pinedo',
-        email: 'carlos.mendoza@gmail.com',
-        phone: '987654321',
-        productType: 'Proyecto Personalizado (Maqueta a Medida)',
-        materials: 'Madera Balsa Premium, PLA translucido, Acrilico 2mm',
-        amount: 187.85,
-        method: 'Online (Yape / Transferencia)',
-        kind: 'Adelanto (50%)',
-        date: '2026-06-24T09:38',
-        operation: 'YAPE-OPE-938102',
-        inventory: true
+    paymentForm: PaymentForm = {
+        client: '',
+        email: '',
+        phone: '',
+        productType: '',
+        materials: '',
+        amount: null,
+        method: '',
+        kind: '',
+        date: '',
+        operation: '',
+        inventory: false,
+        voucherUrl: ''
     };
-
-    paymentForm: PaymentForm = { ...this.chatPaymentForm };
 
     productTypes = [
         'Proyecto Personalizado (Maqueta a Medida)',
@@ -93,79 +101,90 @@ export class FlujoDePagosComponent {
     selectedKindFilter = 'Abono';
     searchTerm = '';
 
-    pendingBalances: PendingBalance[] = [
-        {
-            client: 'Lucia Fernandez Ramos',
-            project: 'Maqueta de Puente Colgante Lineal',
-            materials: 'Madera Pino, PLA Gris',
-            method: 'Online',
-            amount: 250,
-            dueDate: 'Hoy'
-        },
-        {
-            client: 'Carlos Mendoza Pinedo',
-            project: 'Maqueta de Catedral Colonial a Escala',
-            materials: 'Madera Balsa, Acrilico',
-            method: 'Fisico',
-            amount: 187.85,
-            dueDate: 'Manana'
-        },
-        {
-            client: 'Ana Maria Beltran',
-            project: 'Kit escolar de energia renovable',
-            materials: 'Carton Maqueta Gris, Pintura Acrilica',
-            method: 'Fisico',
-            amount: 120,
-            dueDate: 'Viernes'
-        },
-        {
-            client: 'Mateo Salazar Cueva',
-            project: 'Maqueta urbana con iluminacion LED',
-            materials: 'Foam, MDF delgado, LEDs',
-            method: 'Online',
-            amount: 315.5,
-            dueDate: '30 Jun'
-        }
-    ];
+    pendingBalances: PendingBalance[] = [];
+    transactions: Transaction[] = [];
 
-    transactions: Transaction[] = [
-        {
-            client: 'Carlos Mendoza Pinedo',
-            email: 'carlos.mendoza.pinedo@gmail.com',
-            productType: 'Personalizada',
-            materials: 'Madera Balsa Premium, PLA translucido, Acrilico 2mm',
-            method: 'Online',
-            kind: 'Adelanto',
-            amount: 187.85,
-            operation: 'YAPE-OPE-938102',
-            date: '22 Jun 2026, 20:05',
-            status: 'online'
-        },
-        {
-            client: 'Ana Maria Beltran',
-            email: 'ana.beltran@gmail.com',
-            productType: 'Predeterminada',
-            materials: 'Carton Maqueta Gris, Pintura Acrilica',
-            method: 'Fisico',
-            kind: 'Total',
-            amount: 120,
-            operation: 'CAJA-REC-0018',
-            date: '22 Jun 2026, 18:46',
-            status: 'fisico'
-        },
-        {
-            client: 'Lucia Fernandez Ramos',
-            email: 'lucia.fernandez@gmail.com',
-            productType: 'Personalizada',
-            materials: 'Madera Pino, Filamento PLA Verde',
-            method: 'Online',
-            kind: 'Saldo',
-            amount: 250,
-            operation: 'TRANSFER-5820',
-            date: '21 Jun 2026, 16:22',
-            status: 'online'
+    ngOnInit(): void {
+        this.loadTransactions();
+        this.loadPendingBalances();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['prefilledData'] && this.prefilledData) {
+            this.isPrefilled = true;
+            this.paymentForm = {
+                client: this.prefilledData.client || '',
+                email: this.prefilledData.email || '',
+                phone: this.prefilledData.phone || '',
+                productType: this.prefilledData.productType || '',
+                materials: this.prefilledData.materials || '',
+                amount: this.prefilledData.amount || null,
+                method: this.prefilledData.method || '',
+                kind: this.prefilledData.kind || '',
+                date: this.prefilledData.date || new Date().toISOString().substring(0, 16),
+                operation: this.prefilledData.operation || '',
+                inventory: this.prefilledData.inventory || true,
+                voucherUrl: this.prefilledData.voucherUrl || ''
+            };
+            (this.paymentForm as any).roomId = this.prefilledData.roomId;
+            (this.paymentForm as any).solicitudId = this.prefilledData.solicitudId;
+            (this.paymentForm as any).messageId = this.prefilledData.messageId;
+        } else if (changes['prefilledData'] && !this.prefilledData) {
+            this.isPrefilled = false;
         }
-    ];
+    }
+
+    loadTransactions(): void {
+        this.chatService.getAllTransactions().subscribe({
+            next: (mats) => {
+                if (mats) {
+                    this.transactions = mats.map(tx => ({
+                        client: tx.clientName,
+                        email: tx.clientEmail,
+                        productType: tx.tipoMaqueta === 'PERSONALIZADA' ? 'Personalizada' : 'Predeterminada',
+                        materials: tx.materiales || 'Materiales estándar',
+                        method: tx.metodoPago === 'ONLINE' ? 'Online' : 'Fisico',
+                        kind: tx.tipoAbono === 'ADELANTO' ? 'Adelanto' : tx.tipoAbono === 'SALDO' ? 'Saldo' : 'Total',
+                        amount: Number(tx.monto),
+                        operation: tx.codigoOperacion || 'N/A',
+                        date: new Date(tx.fechaTransaccion).toLocaleDateString('es-PE', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }),
+                        status: tx.metodoPago === 'ONLINE' ? 'online' : 'fisico'
+                    }));
+                }
+            },
+            error: (err) => console.error('Error al cargar transacciones reales:', err)
+        });
+    }
+
+    loadPendingBalances(): void {
+        this.requestService.listarTodas().subscribe({
+            next: (reqs) => {
+                if (reqs) {
+                    this.pendingBalances = reqs
+                        .filter(r => r.estado === 'PENDIENTE' || r.estado === 'PROCESANDO')
+                        .map(r => {
+                            const estimatedAmount = r.isCustom ? 187.85 : 120.00;
+                            return {
+                                client: r.clienteNombre,
+                                project: r.productoNombre || 'Proyecto Maqueta',
+                                materials: r.materialesDeseados || 'Materiales estándar',
+                                method: r.isCustom ? 'Online' as PaymentMethod : 'Fisico' as PaymentMethod,
+                                amount: estimatedAmount,
+                                dueDate: r.estado === 'PENDIENTE' ? 'Hoy' : 'En proceso',
+                                solicitudId: r.id
+                            };
+                        });
+                }
+            },
+            error: (err) => console.error('Error al cargar saldos pendientes reales:', err)
+        });
+    }
 
     get filteredTransactions(): Transaction[] {
         const query = this.searchTerm.trim().toLowerCase();
@@ -199,27 +218,25 @@ export class FlujoDePagosComponent {
         this.selectedReceipt = null;
     }
 
-    setFormMode(mode: FormMode): void {
-        this.formMode = mode;
-        this.paymentForm = mode === 'chat'
-            ? { ...this.chatPaymentForm }
-            : {
-                client: '',
-                email: '',
-                phone: '',
-                productType: '',
-                materials: '',
-                amount: null,
-                method: '',
-                kind: '',
-                date: '',
-                operation: '',
-                inventory: false
-            };
+    resetForm(): void {
+        this.isPrefilled = false;
+        this.paymentForm = {
+            client: '',
+            email: '',
+            phone: '',
+            productType: '',
+            materials: '',
+            amount: null,
+            method: '',
+            kind: '',
+            date: '',
+            operation: '',
+            inventory: false,
+            voucherUrl: ''
+        };
     }
 
     collectBalance(balance: PendingBalance): void {
-        this.formMode = 'chat';
         this.paymentForm.client = balance.client;
         this.paymentForm.materials = balance.materials;
         this.paymentForm.amount = balance.amount;
@@ -230,35 +247,64 @@ export class FlujoDePagosComponent {
     }
 
     cancelTransaction(transaction: Transaction): void {
+        // En un entorno de producción se llamaría a un servicio DELETE, de momento filtramos localmente
         this.transactions = this.transactions.filter((item) => item !== transaction);
     }
 
     exportCsv(): void {
         this.exportLabel = 'CSV exportado';
-
         window.setTimeout(() => {
             this.exportLabel = 'Exportar CSV';
         }, 1200);
     }
 
     registerTransaction(): void {
-        const method: PaymentMethod = this.paymentForm.method.startsWith('Online') ? 'Online' : 'Fisico';
-        const kind: PaymentKind = this.paymentForm.kind.startsWith('Pago') ? 'Total' : this.paymentForm.kind.startsWith('Saldo') ? 'Saldo' : 'Adelanto';
+        if (!this.paymentForm.client || !this.paymentForm.email || !this.paymentForm.amount) {
+            alert('Por favor, completa los campos obligatorios: Cliente, Correo y Monto.');
+            return;
+        }
 
-        this.transactions = [
-            {
-                client: this.paymentForm.client,
-                email: this.paymentForm.email,
-                productType: this.paymentForm.productType.includes('Personalizado') ? 'Personalizada' : 'Predeterminada',
-                materials: this.paymentForm.materials,
-                method,
-                kind,
-                amount: Number(this.paymentForm.amount || 0),
-                operation: this.paymentForm.operation,
-                date: '24 Jun 2026, 09:38',
-                status: method === 'Online' ? 'online' : 'fisico'
+        const method: 'ONLINE' | 'FISICO' = this.paymentForm.method.startsWith('Online') ? 'ONLINE' : 'FISICO';
+        const kind: 'ADELANTO' | 'SALDO' | 'TOTAL' = this.paymentForm.kind.startsWith('Pago') || this.paymentForm.kind.includes('100%') ? 'TOTAL' : this.paymentForm.kind.startsWith('Saldo') ? 'SALDO' : 'ADELANTO';
+        const tipoMaqueta = this.paymentForm.productType.includes('Personalizado') ? 'PERSONALIZADA' : 'PREDETERMINADA';
+
+        const payload = {
+            clientName: this.paymentForm.client,
+            clientEmail: this.paymentForm.email,
+            clientPhone: this.paymentForm.phone || '999999999',
+            roomId: (this.paymentForm as any).roomId || null,
+            monto: Number(this.paymentForm.amount || 0),
+            metodoPago: method,
+            tipoAbono: kind,
+            tipoMaqueta: tipoMaqueta,
+            materiales: this.paymentForm.materials || 'Materiales del proyecto',
+            fechaTransaccion: this.paymentForm.date ? new Date(this.paymentForm.date).toISOString() : new Date().toISOString(),
+            codigoOperacion: this.paymentForm.operation || `OPE-${Date.now()}`
+        };
+
+        this.chatService.registerPayment(payload).subscribe({
+            next: (res) => {
+                alert('¡Pago registrado con éxito en la base de datos!');
+
+                // Enviar mensaje de confirmación del sistema vía WebSocket
+                if (payload.roomId) {
+                    const abonoText = kind === 'ADELANTO' ? 'adelanto' : kind === 'SALDO' ? 'saldo' : 'pago completo';
+                    const sysMessage = `El vendedor ha verificado y registrado el pago de ${abonoText} de S/ ${payload.monto.toFixed(2)}.`;
+                    this.chatService.sendMessage(payload.roomId, sysMessage, 'SYSTEM');
+                }
+
+                // Notificar al padre y reiniciar
+                this.pagoRegistrado.emit();
+                this.resetForm();
+
+                // Recargar datos reales
+                this.loadTransactions();
+                this.loadPendingBalances();
             },
-            ...this.transactions
-        ];
+            error: (err) => {
+                console.error('Error al registrar pago en backend:', err);
+                alert(err?.error?.message || 'Error al registrar el pago. Asegúrate de que el cliente esté registrado en la base de datos.');
+            }
+        });
     }
 }

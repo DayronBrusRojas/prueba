@@ -63,7 +63,7 @@ function ensureCompleteModel(model: ModelItem): ModelItem {
 export class CatalogDetailComponent implements OnChanges {
   @Input({ required: true }) model!: ModelItem;
   @Output() back = new EventEmitter<void>();
-  @Output() accessRequested = new EventEmitter<'comprar' | 'personalizar'>();
+  @Output() accessRequested = new EventEmitter<{ mode: 'comprar' | 'personalizar', model: ModelItem }>();
   @Output() relatedSelected = new EventEmitter<ModelItem>();
 
   private readonly maquetaService = inject(MaquetaService);
