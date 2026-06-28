@@ -229,7 +229,6 @@ export class ChatComponent implements OnInit, OnDestroy, OnChanges, AfterViewChe
     this.chatService.getOrCreateRoom(requestId).subscribe({
       next: (room) => {
         this.selectRoom(room);
-        this.loadRoomsList();
       },
       error: (err) => console.error('Error auto-selecting/creating room', err)
     });
